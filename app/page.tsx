@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { repository } from "@/lib/repository";
 import { generateAllAdapters } from "@/lib/adapters";
+import { artifactProcessingPipeline } from "@/lib/artifact-processing";
 import { summarizeQuality } from "@/lib/quality";
 import { getSetupState } from "@/lib/setup";
 import { bootstrapTenantFromForm } from "@/app/setup/actions";
@@ -419,6 +420,68 @@ async function ConnectorOpsPanel() {
   );
 }
 
+async function ArtifactProcessingPanel() {
+  const state = await artifactProcessingPipeline.getState();
+  const records = state.records.slice(0, 5);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Memory compiler</p>
+          <h2>Artifact processing</h2>
+        </div>
+        <span className="status">{state.chunks.length} chunks</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Records</span>
+          <strong>{state.records.length}</strong>
+          <small>parse to index</small>
+        </div>
+        <div className="connectionItem">
+          <span>Full text</span>
+          <strong>{state.fullTextIndex.length}</strong>
+          <small>indexed chunks</small>
+        </div>
+        <div className="connectionItem">
+          <span>Vectors</span>
+          <strong>{state.vectorIndex.length}</strong>
+          <small>embedded chunks</small>
+        </div>
+        <div className="connectionItem">
+          <span>Failures</span>
+          <strong>{state.records.filter((record) => record.status === "failed").length}</strong>
+          <small>retryable</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {records.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No artifacts processed yet</strong>
+              <span>POST /api/v1/artifact-processing/process with an artifact id.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {records.map((record) => (
+          <div className="connectionRow" key={record.artifactId}>
+            <div>
+              <strong>{record.artifactId}</strong>
+              <span>
+                {record.stage} · {record.chunkCount} chunks · v{record.version}
+              </span>
+              {record.failureReason ? <small>{record.failureReason}</small> : null}
+            </div>
+            <span className={statusClass(record.status)}>{record.status}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function AuditPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
   return (
     <section className="panel auditPanel">
@@ -643,6 +706,8 @@ export default async function Home() {
         </section>
 
         <ConnectorOpsPanel />
+
+        <ArtifactProcessingPanel />
 
         <SlackConnectorConsole
           tenantId={tenantId}
