@@ -19,6 +19,7 @@ import { repository } from "@/lib/repository";
 import { generateAllAdapters } from "@/lib/adapters";
 import { artifactProcessingPipeline } from "@/lib/artifact-processing";
 import { candidateExtractionWorker } from "@/lib/candidate-extraction";
+import { memoryConflictWorkflow } from "@/lib/memory-conflicts";
 import { summarizeQuality } from "@/lib/quality";
 import { getSetupState } from "@/lib/setup";
 import { bootstrapTenantFromForm } from "@/app/setup/actions";
@@ -547,6 +548,72 @@ async function CandidateExtractionPanel() {
   );
 }
 
+async function MemoryConflictPanel() {
+  const state = await memoryConflictWorkflow.getState();
+  const openConflicts = state.conflicts.filter((conflict) => conflict.status === "review");
+  const conflicts = state.conflicts.slice(0, 5);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Review intelligence</p>
+          <h2>Memory conflicts</h2>
+        </div>
+        <span className={statusClass(openConflicts.length > 0 ? "warning" : "passed")}>{openConflicts.length} open</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Conflicts</span>
+          <strong>{state.conflicts.length}</strong>
+          <small>duplicates and contradictions</small>
+        </div>
+        <div className="connectionItem">
+          <span>Audit events</span>
+          <strong>{state.auditEvents.length}</strong>
+          <small>review decisions</small>
+        </div>
+        <div className="connectionItem">
+          <span>Lineage</span>
+          <strong>{state.lineageEvents.length}</strong>
+          <small>resolution edges</small>
+        </div>
+        <div className="connectionItem">
+          <span>Resolved</span>
+          <strong>{state.conflicts.filter((conflict) => conflict.status !== "review").length}</strong>
+          <small>curated outcomes</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {conflicts.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No conflicts detected yet</strong>
+              <span>POST /api/v1/memory-conflicts/detect after candidate extraction.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {conflicts.map((conflict) => (
+          <div className="connectionRow" key={conflict.id}>
+            <div>
+              <strong>{conflict.compared.candidate.title}</strong>
+              <span>
+                {conflict.conflictType} · {conflict.recommendedResolution} · {conflict.compared.existing.tier}
+              </span>
+              <small>
+                Compared with {conflict.compared.existing.title} · freshness{" "}
+                {Math.round(conflict.compared.existing.freshness * 100)}%
+              </small>
+            </div>
+            <span className={statusClass(conflict.status)}>{conflict.status}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function AuditPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
   return (
     <section className="panel auditPanel">
@@ -775,6 +842,8 @@ export default async function Home() {
         <ArtifactProcessingPanel />
 
         <CandidateExtractionPanel />
+
+        <MemoryConflictPanel />
 
         <SlackConnectorConsole
           tenantId={tenantId}
