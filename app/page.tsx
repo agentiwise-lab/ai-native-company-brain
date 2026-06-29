@@ -20,6 +20,7 @@ import { repository } from "@/lib/repository";
 import { generateAllAdapters } from "@/lib/adapters";
 import { agentExportService } from "@/lib/agent-exports";
 import { packageDistributionService } from "@/lib/package-distribution";
+import { durableScheduler } from "@/lib/durable-scheduler";
 import { artifactProcessingPipeline } from "@/lib/artifact-processing";
 import { candidateExtractionWorker } from "@/lib/candidate-extraction";
 import { memoryConflictWorkflow } from "@/lib/memory-conflicts";
@@ -55,10 +56,10 @@ function statusClass(status: string) {
   if (["published", "approved", "passed", "succeeded", "merged", "active", "configured"].includes(status)) {
     return "status statusGood";
   }
-  if (["review", "warning", "needs-approval", "checks-running", "pending"].includes(status)) {
+  if (["review", "warning", "needs-approval", "checks-running", "pending", "queued", "running", "retried"].includes(status)) {
     return "status statusWarn";
   }
-  if (["blocked", "denied", "failed", "rejected", "revoked", "errored"].includes(status)) {
+  if (["blocked", "canceled", "denied", "failed", "rejected", "revoked", "errored"].includes(status)) {
     return "status statusBad";
   }
   return "status";
@@ -418,6 +419,83 @@ function CronConsole({ runs, items }: { runs: CronRun[]; items: RegistryItem[] }
             </div>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
+
+async function DurableSchedulerPanel() {
+  const state = await durableScheduler.getState();
+  const jobs = state.jobs.slice(0, 5);
+  const runs = state.runs.slice(0, 5);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Durable workers</p>
+          <h2>Scheduler leases</h2>
+        </div>
+        <span className="status">{state.leases.length} active leases</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Jobs</span>
+          <strong>{state.jobs.length}</strong>
+          <small>persisted definitions</small>
+        </div>
+        <div className="connectionItem">
+          <span>Runs</span>
+          <strong>{state.runs.length}</strong>
+          <small>full history</small>
+        </div>
+        <div className="connectionItem">
+          <span>Retries</span>
+          <strong>{state.runs.filter((run) => run.status === "retried").length}</strong>
+          <small>budget/retry policy</small>
+        </div>
+        <div className="connectionItem">
+          <span>Transitions</span>
+          <strong>{state.transitions.length}</strong>
+          <small>queued to terminal states</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {jobs.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No durable scheduler jobs yet</strong>
+              <span>POST /api/v1/scheduler/jobs, then lease due work with /api/v1/scheduler/lease.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {jobs.map((job) => (
+          <div className="connectionRow" key={job.id}>
+            <div>
+              <strong>{job.name}</strong>
+              <span>
+                {job.schedule} · {job.timezone} · next {job.nextRunAt}
+              </span>
+              <small>
+                budget ${job.budgetUsd} · {job.allowedTools.length} tools · retry {job.retryPolicy}
+              </small>
+            </div>
+            <span className={statusClass(job.enabled ? "active" : "paused")}>{job.enabled ? "active" : "paused"}</span>
+          </div>
+        ))}
+        {runs.map((run) => (
+          <div className="connectionRow" key={run.id}>
+            <div>
+              <strong>{run.jobId}</strong>
+              <span>
+                attempt {run.attempt} · {run.workerId ?? "unassigned"} · {run.output}
+              </span>
+              <small>{run.toolInvocationIds.length} tool invocation(s)</small>
+            </div>
+            <span className={statusClass(run.status)}>{run.status}</span>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -1277,10 +1355,13 @@ export default async function Home() {
 
         <section className="layoutGrid" id="scheduler">
           <CronConsole runs={snapshot.cronRuns} items={snapshot.registry} />
-          <CompatibilityPanel items={snapshot.registry} />
+          <DurableSchedulerPanel />
         </section>
 
-        <PackageDistributionPanel principal={snapshot.principal} />
+        <section className="layoutGrid">
+          <CompatibilityPanel items={snapshot.registry} />
+          <PackageDistributionPanel principal={snapshot.principal} />
+        </section>
 
         <section id="audit">
           <AuditPanel snapshot={snapshot} />

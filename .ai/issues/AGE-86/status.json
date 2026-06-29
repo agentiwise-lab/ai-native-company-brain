@@ -1,0 +1,23 @@
+{
+  "identifier": "AGE-86",
+  "title": "Durable scheduler worker with leases, retries, budgets",
+  "url": "https://linear.app/agentiwise/issue/AGE-86/durable-scheduler-worker-with-leases-retries-budgets",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/durable-scheduler.test.ts",
+    "npm test",
+    "npm run build"
+  ],
+  "implementation": {
+    "service": "lib/durable-scheduler.ts",
+    "routes": [
+      "app/api/v1/scheduler/jobs/route.ts",
+      "app/api/v1/scheduler/lease/route.ts",
+      "app/api/v1/scheduler/leases/[id]/execute/route.ts",
+      "app/api/v1/scheduler/status/route.ts"
+    ],
+    "ui": "app/page.tsx"
+  },
+  "updatedAt": "2026-06-29T21:07:00.000+05:30"
+}
