@@ -2,7 +2,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { createDurableScheduler, type DurableSchedulerState, type DurableSchedulerStore } from "../lib/durable-scheduler";
+import { createDurableScheduler, type DurableSchedulerState, type DurableSchedulerStore, type UpsertJobInput } from "../lib/durable-scheduler";
 import type { Principal, ToolDefinition } from "../lib/types";
 
 const principal: Principal = {
@@ -56,7 +56,7 @@ function createStore() {
   return store;
 }
 
-function job(overrides: Record<string, unknown> = {}) {
+function job(overrides: Partial<UpsertJobInput> = {}): UpsertJobInput {
   return {
     id: "cron_due",
     tenantId: "tenant_demo",

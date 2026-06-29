@@ -100,7 +100,7 @@ type SchedulerOptions = {
   tenantId?: string;
 };
 
-type UpsertJobInput = Omit<DurableSchedulerJob, "createdAt" | "updatedAt" | "maxAttempts"> & {
+export type UpsertJobInput = Omit<DurableSchedulerJob, "createdAt" | "updatedAt" | "maxAttempts"> & {
   maxAttempts?: number;
 };
 

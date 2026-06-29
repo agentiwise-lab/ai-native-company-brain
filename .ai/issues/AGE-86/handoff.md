@@ -16,4 +16,5 @@
   - `npm test -- tests/durable-scheduler.test.ts`
   - `npm test`
   - `npm run build`
+  - `npm run ci`
 - Next step: commit/push, wait for GitHub Actions success, then mark AGE-86 Done in Linear.
