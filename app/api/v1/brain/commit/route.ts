@@ -12,5 +12,5 @@ const bodySchema = z.object({
 
 export async function POST(request: Request) {
   const body = bodySchema.parse(await request.json());
-  return NextResponse.json(repository.commitBrain(body), { status: 201 });
+  return NextResponse.json(await repository.commitBrain(body), { status: 201 });
 }

@@ -14,6 +14,8 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+Without `DATABASE_URL`, the app runs against the typed seed repository for local demos.
+
 ## Self-Host Stack
 
 ```bash
@@ -27,6 +29,14 @@ This starts:
 - Redis queue
 - MinIO object storage
 
+To initialize a standalone Postgres database outside Docker:
+
+```bash
+export DATABASE_URL=postgres://brain:brain@localhost:5432/company_brain
+npm run db:migrate
+npm run db:seed
+```
+
 ## Important Files
 
 - `docs/implementation-design.md`: implementation design and architecture diagram
@@ -38,4 +48,4 @@ This starts:
 
 ## Current Status
 
-This is a runnable v0 scaffold. The API uses a typed in-memory seed repository so the UI and agent endpoints work immediately. The Postgres schema and Docker stack define the production persistence boundary for the next implementation pass.
+This is a runnable v0 scaffold with a repository boundary. Seed mode keeps local demos instant, while `DATABASE_URL` switches the UI, API, MCP endpoint, registry, cron runs, changesets, atoms, artifacts, and audit events to Postgres.

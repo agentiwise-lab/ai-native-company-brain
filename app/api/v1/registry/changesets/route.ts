@@ -10,7 +10,7 @@ const bodySchema = z.object({
 
 export async function POST(request: Request) {
   const body = bodySchema.parse(await request.json());
-  const changeset = repository.createRegistryChangeset(body);
+  const changeset = await repository.createRegistryChangeset(body);
 
   if (!changeset) {
     return NextResponse.json({ error: "Target registry item not found" }, { status: 404 });

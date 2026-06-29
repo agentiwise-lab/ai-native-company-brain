@@ -10,7 +10,7 @@ const bodySchema = z.object({
 });
 
 export async function GET() {
-  return NextResponse.json(repository.listCronJobs());
+  return NextResponse.json(await repository.listCronJobs());
 }
 
 export async function POST(request: Request) {

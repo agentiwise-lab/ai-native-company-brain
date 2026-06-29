@@ -3,7 +3,7 @@ import { repository } from "@/lib/repository";
 
 export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
-  const result = repository.publishRegistryItem(id);
+  const result = await repository.publishRegistryItem(id);
 
   if (!result.item) {
     return NextResponse.json({ error: "Registry item not found" }, { status: 404 });

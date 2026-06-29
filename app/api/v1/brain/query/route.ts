@@ -11,5 +11,5 @@ const bodySchema = z.object({
 
 export async function POST(request: Request) {
   const body = bodySchema.parse(await request.json().catch(() => ({})));
-  return NextResponse.json(repository.queryBrain(body.query, body.principalId, body.tier));
+  return NextResponse.json(await repository.queryBrain(body.query, body.principalId, body.tier));
 }

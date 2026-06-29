@@ -3,7 +3,7 @@ import { repository } from "@/lib/repository";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
-  const job = repository.getCronJob(id);
+  const job = await repository.getCronJob(id);
 
   if (!job) {
     return NextResponse.json({ error: "Cron job not found" }, { status: 404 });
@@ -14,7 +14,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
-  const job = repository.getCronJob(id);
+  const job = await repository.getCronJob(id);
 
   if (!job) {
     return NextResponse.json({ error: "Cron job not found" }, { status: 404 });

@@ -27,7 +27,7 @@ function error(id: JsonRpcRequest["id"], code: number, message: string) {
   };
 }
 
-export function handleMcpRequest(request: JsonRpcRequest) {
+export async function handleMcpRequest(request: JsonRpcRequest) {
   const id = request.id ?? null;
 
   switch (request.method) {
@@ -126,7 +126,7 @@ export function handleMcpRequest(request: JsonRpcRequest) {
           content: [
             {
               type: "text",
-              text: JSON.stringify(repository.queryBrain(args.query ?? "", undefined, args.tier as never), null, 2)
+              text: JSON.stringify(await repository.queryBrain(args.query ?? "", undefined, args.tier as never), null, 2)
             }
           ]
         });
@@ -138,7 +138,7 @@ export function handleMcpRequest(request: JsonRpcRequest) {
             {
               type: "text",
               text: JSON.stringify(
-                repository.commitBrain({
+                await repository.commitBrain({
                   title: args.title ?? "Untitled candidate memory",
                   body: args.body ?? "",
                   tier: args.tier as never
@@ -156,18 +156,19 @@ export function handleMcpRequest(request: JsonRpcRequest) {
           content: [
             {
               type: "text",
-              text: JSON.stringify(repository.searchRegistry(args.query ?? "", args.kind as never), null, 2)
+              text: JSON.stringify(await repository.searchRegistry(args.query ?? "", args.kind as never), null, 2)
             }
           ]
         });
       }
 
       if (name === "skill.resolve") {
+        const registry = await repository.allRegistry();
         return ok(id, {
           content: [
             {
               type: "text",
-              text: JSON.stringify(generateAllAdapters(repository.registry), null, 2)
+              text: JSON.stringify(generateAllAdapters(registry), null, 2)
             }
           ]
         });
@@ -178,7 +179,7 @@ export function handleMcpRequest(request: JsonRpcRequest) {
           content: [
             {
               type: "text",
-              text: JSON.stringify(repository.runCronJob(args.id ?? ""), null, 2)
+              text: JSON.stringify(await repository.runCronJob(args.id ?? ""), null, 2)
             }
           ]
         });
@@ -189,7 +190,7 @@ export function handleMcpRequest(request: JsonRpcRequest) {
           content: [
             {
               type: "text",
-              text: JSON.stringify(repository.lineage(args.id ?? ""), null, 2)
+              text: JSON.stringify(await repository.lineage(args.id ?? ""), null, 2)
             }
           ]
         });
@@ -222,19 +223,20 @@ export function handleMcpRequest(request: JsonRpcRequest) {
             {
               uri,
               mimeType: "application/json",
-              text: JSON.stringify(repository.dashboard(), null, 2)
+              text: JSON.stringify(await repository.dashboard(), null, 2)
             }
           ]
         });
       }
 
       if (uri === "brain://registry") {
+        const registry = await repository.allRegistry();
         return ok(id, {
           contents: [
             {
               uri,
               mimeType: "application/json",
-              text: JSON.stringify(repository.registry, null, 2)
+              text: JSON.stringify(registry, null, 2)
             }
           ]
         });

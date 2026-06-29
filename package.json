@@ -7,6 +7,10 @@
     "dev": "next dev",
     "build": "next build",
     "ci": "npm run typecheck && npm test && npm run build",
+    "db:migrate": "tsx scripts/db-migrate.ts",
+    "db:migrate:dry-run": "tsx scripts/db-migrate.ts --dry-run",
+    "db:seed": "tsx scripts/db-seed.ts",
+    "db:seed:dry-run": "tsx scripts/db-seed.ts --dry-run",
     "issue:checkpoint": "node scripts/linear-issue-loop.mjs checkpoint",
     "issue:finish": "node scripts/linear-issue-loop.mjs finish",
     "issue:pick": "node scripts/linear-issue-loop.mjs pick",
@@ -22,6 +26,7 @@
     "@types/react-dom": "^19.1.6",
     "lucide-react": "^0.523.0",
     "next": "^15.3.4",
+    "pg": "^8.22.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "typescript": "^5.8.3",
@@ -31,6 +36,8 @@
     "postcss": "^8.5.10"
   },
   "devDependencies": {
+    "@types/pg": "^8.20.0",
+    "tsx": "^4.22.4",
     "vitest": "^3.2.6"
   }
 }

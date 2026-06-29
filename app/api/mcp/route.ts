@@ -3,7 +3,7 @@ import { handleMcpRequest } from "@/lib/mcp";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  return NextResponse.json(handleMcpRequest(body));
+  return NextResponse.json(await handleMcpRequest(body));
 }
 
 export async function GET() {

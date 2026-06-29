@@ -1,0 +1,16 @@
+{
+  "identifier": "AGE-64",
+  "title": "Persist brain artifacts, atoms, changesets, and events in Postgres",
+  "url": "https://linear.app/agentiwise/issue/AGE-64/persist-brain-artifacts-atoms-changesets-and-events-in-postgres",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/postgres-repository.test.ts",
+    "npm run typecheck",
+    "npm test",
+    "npm run db:migrate:dry-run",
+    "npm run db:seed:dry-run",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-29T13:05:30.000Z"
+}

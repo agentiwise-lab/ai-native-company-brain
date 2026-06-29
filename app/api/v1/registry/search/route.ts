@@ -8,5 +8,5 @@ export async function GET(request: Request) {
   const kindParam = url.searchParams.get("kind");
   const kind = registryKinds.includes(kindParam as RegistryKind) ? (kindParam as RegistryKind) : undefined;
   const principalId = url.searchParams.get("principalId") ?? undefined;
-  return NextResponse.json(repository.searchRegistry(query, kind, principalId));
+  return NextResponse.json(await repository.searchRegistry(query, kind, principalId));
 }

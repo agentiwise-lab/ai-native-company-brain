@@ -336,13 +336,13 @@ function SetupView() {
   );
 }
 
-export default function Home() {
+export default async function Home() {
   const setup = getSetupState();
   if (!setup.isComplete) {
     return <SetupView />;
   }
 
-  const snapshot = repository.dashboard();
+  const snapshot = await repository.dashboard();
   const quality = summarizeQuality(snapshot.qualityScores);
   const openChangesets = snapshot.changesets.filter((changeset) => !["merged", "rolled-back"].includes(changeset.status));
   const publishedCapabilities = snapshot.registry.filter((item) => item.status === "published").length;

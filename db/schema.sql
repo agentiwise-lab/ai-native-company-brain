@@ -1,38 +1,53 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
-CREATE TYPE brain_tier AS ENUM (
-  'individual',
-  'team',
-  'department',
-  'company-main',
-  'exec-protected',
-  'regulated'
-);
+DO $$
+BEGIN
+  CREATE TYPE brain_tier AS ENUM (
+    'individual',
+    'team',
+    'department',
+    'company-main',
+    'exec-protected',
+    'regulated'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE registry_kind AS ENUM (
-  'tool',
-  'skill',
-  'plugin',
-  'cronjob',
-  'agent',
-  'policy'
-);
+DO $$
+BEGIN
+  CREATE TYPE registry_kind AS ENUM (
+    'tool',
+    'skill',
+    'plugin',
+    'cronjob',
+    'agent',
+    'policy'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE sensitivity AS ENUM (
-  'public',
-  'internal',
-  'confidential',
-  'restricted'
-);
+DO $$
+BEGIN
+  CREATE TYPE sensitivity AS ENUM (
+    'public',
+    'internal',
+    'confidential',
+    'restricted'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TABLE tenants (
+CREATE TABLE IF NOT EXISTS tenants (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   encryption_key_ref TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE principals (
+CREATE TABLE IF NOT EXISTS principals (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -44,7 +59,7 @@ CREATE TABLE principals (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE source_artifacts (
+CREATE TABLE IF NOT EXISTS source_artifacts (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   source_type TEXT NOT NULL,
@@ -59,7 +74,7 @@ CREATE TABLE source_artifacts (
   UNIQUE (tenant_id, checksum)
 );
 
-CREATE TABLE knowledge_atoms (
+CREATE TABLE IF NOT EXISTS knowledge_atoms (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
@@ -84,11 +99,11 @@ CREATE TABLE knowledge_atoms (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX knowledge_atoms_search_idx ON knowledge_atoms USING GIN (search_vector);
-CREATE INDEX knowledge_atoms_embedding_idx ON knowledge_atoms USING ivfflat (embedding vector_cosine_ops);
-CREATE INDEX knowledge_atoms_tier_status_idx ON knowledge_atoms (tenant_id, tier, status);
+CREATE INDEX IF NOT EXISTS knowledge_atoms_search_idx ON knowledge_atoms USING GIN (search_vector);
+CREATE INDEX IF NOT EXISTS knowledge_atoms_embedding_idx ON knowledge_atoms USING ivfflat (embedding vector_cosine_ops);
+CREATE INDEX IF NOT EXISTS knowledge_atoms_tier_status_idx ON knowledge_atoms (tenant_id, tier, status);
 
-CREATE TABLE registry_items (
+CREATE TABLE IF NOT EXISTS registry_items (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   kind registry_kind NOT NULL,
@@ -109,9 +124,9 @@ CREATE TABLE registry_items (
   UNIQUE (tenant_id, slug, version)
 );
 
-CREATE INDEX registry_items_kind_tier_idx ON registry_items (tenant_id, kind, tier, status);
+CREATE INDEX IF NOT EXISTS registry_items_kind_tier_idx ON registry_items (tenant_id, kind, tier, status);
 
-CREATE TABLE changesets (
+CREATE TABLE IF NOT EXISTS changesets (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
@@ -128,10 +143,10 @@ CREATE TABLE changesets (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX changesets_target_idx ON changesets (tenant_id, target_type, target_id);
-CREATE INDEX changesets_status_idx ON changesets (tenant_id, status, tier);
+CREATE INDEX IF NOT EXISTS changesets_target_idx ON changesets (tenant_id, target_type, target_id);
+CREATE INDEX IF NOT EXISTS changesets_status_idx ON changesets (tenant_id, status, tier);
 
-CREATE TABLE dependency_edges (
+CREATE TABLE IF NOT EXISTS dependency_edges (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   from_id TEXT NOT NULL,
@@ -140,10 +155,10 @@ CREATE TABLE dependency_edges (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX dependency_edges_from_idx ON dependency_edges (tenant_id, from_id, relation);
-CREATE INDEX dependency_edges_to_idx ON dependency_edges (tenant_id, to_id, relation);
+CREATE INDEX IF NOT EXISTS dependency_edges_from_idx ON dependency_edges (tenant_id, from_id, relation);
+CREATE INDEX IF NOT EXISTS dependency_edges_to_idx ON dependency_edges (tenant_id, to_id, relation);
 
-CREATE TABLE cron_runs (
+CREATE TABLE IF NOT EXISTS cron_runs (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   cron_job_id TEXT NOT NULL REFERENCES registry_items(id),
@@ -155,9 +170,9 @@ CREATE TABLE cron_runs (
   audit_event_ids TEXT[] NOT NULL DEFAULT '{}'
 );
 
-CREATE INDEX cron_runs_job_idx ON cron_runs (tenant_id, cron_job_id, started_at DESC);
+CREATE INDEX IF NOT EXISTS cron_runs_job_idx ON cron_runs (tenant_id, cron_job_id, started_at DESC);
 
-CREATE TABLE quality_scores (
+CREATE TABLE IF NOT EXISTS quality_scores (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   subject_id TEXT NOT NULL,
@@ -168,9 +183,9 @@ CREATE TABLE quality_scores (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX quality_scores_subject_idx ON quality_scores (tenant_id, subject_type, subject_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS quality_scores_subject_idx ON quality_scores (tenant_id, subject_type, subject_id, created_at DESC);
 
-CREATE TABLE brain_events (
+CREATE TABLE IF NOT EXISTS brain_events (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   actor_id TEXT NOT NULL REFERENCES principals(id),
@@ -182,8 +197,9 @@ CREATE TABLE brain_events (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX brain_events_target_idx ON brain_events (tenant_id, target_type, target_id, created_at DESC);
-CREATE INDEX brain_events_actor_idx ON brain_events (tenant_id, actor_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS brain_events_target_idx ON brain_events (tenant_id, target_type, target_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS brain_events_actor_idx ON brain_events (tenant_id, actor_id, created_at DESC);
 
 INSERT INTO tenants (id, name, encryption_key_ref)
-VALUES ('tenant_demo', 'Demo Company', 'local-dev-key');
+VALUES ('tenant_demo', 'Demo Company', 'local-dev-key')
+ON CONFLICT (id) DO NOTHING;
