@@ -21,6 +21,7 @@ import { summarizeQuality } from "@/lib/quality";
 import { getSetupState } from "@/lib/setup";
 import { bootstrapTenantFromForm } from "@/app/setup/actions";
 import { composioControlPlane, type ComposioState } from "@/lib/composio-control-plane";
+import { BrainWorkbench } from "@/app/brain-workbench";
 import type { BrainTier, Changeset, CronRun, DashboardSnapshot, RegistryItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -406,6 +407,7 @@ export default async function Home() {
   }
 
   const [snapshot, composio] = await Promise.all([repository.dashboard(), composioControlPlane.getState()]);
+  const tenantId = process.env.COMPANY_BRAIN_TENANT_ID ?? "tenant_demo";
   const quality = summarizeQuality(snapshot.qualityScores);
   const openChangesets = snapshot.changesets.filter((changeset) => !["merged", "rolled-back"].includes(changeset.status));
   const publishedCapabilities = snapshot.registry.filter((item) => item.status === "published").length;
@@ -480,6 +482,8 @@ export default async function Home() {
           </div>
           <ArchitectureMap />
         </section>
+
+        <BrainWorkbench tenantId={tenantId} principalId={snapshot.principal.id} />
 
         <section className="metricsGrid">
           <MetricCard

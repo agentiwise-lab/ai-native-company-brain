@@ -18,6 +18,9 @@ export type CommitBrainInput = {
   body: string;
   tier?: BrainTier;
   principalId?: string;
+  sourceIds?: string[];
+  sourceUri?: string;
+  sourceTitle?: string;
 };
 
 export type CreateRegistryChangesetInput = {
@@ -57,7 +60,7 @@ export type BrainRepository = {
   dashboard(): Promise<DashboardSnapshot>;
   principal(id?: string): Promise<Principal>;
   queryBrain(query: string, principalId?: string, requestedTier?: BrainTier): Promise<BrainQueryResult>;
-  commitBrain(input: CommitBrainInput): Promise<{ atom: KnowledgeAtom; changeset: Changeset }>;
+  commitBrain(input: CommitBrainInput): Promise<{ atom: KnowledgeAtom; changeset: Changeset; event: BrainEvent }>;
   lineage(atomId: string): Promise<LineageResult>;
   searchRegistry(query?: string, kind?: RegistryKind, principalId?: string): Promise<RegistryItem[]>;
   createRegistryChangeset(input: CreateRegistryChangesetInput): Promise<Changeset | null>;

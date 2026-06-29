@@ -224,7 +224,7 @@ function createCandidateAtom(input: CommitBrainInput, principal: Principal, tena
     atomType: "claim",
     tier: input.tier ?? "team",
     ownerId: principal.id,
-    sourceIds: [],
+    sourceIds: input.sourceIds ?? [],
     acl: {
       teams: principal.teams,
       roles: ["admin", "reviewer", "operator", "agent"],
@@ -237,7 +237,7 @@ function createCandidateAtom(input: CommitBrainInput, principal: Principal, tena
     reviewDueAt: new Date(Date.parse(now) + 7 * 24 * 60 * 60 * 1000).toISOString(),
     createdAt: now,
     updatedAt: now,
-    tags: ["candidate", "agent-commit"]
+    tags: input.sourceUri ? ["candidate", "agent-commit", "source-linked"] : ["candidate", "agent-commit"]
   };
 }
 
@@ -527,7 +527,7 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
         }
         return includesText(atom.title, query) || includesText(atom.body, query) || atom.tags.some((tag) => includesText(tag, query));
       });
-      const citations = matches.length > 0 ? matches : readable.slice(0, 3);
+      const citations = query.trim() ? matches : readable.slice(0, 3);
       const retrievedRegistry = registryResult.rows
         .map(toRegistryItem)
         .filter((item) => canDiscoverRegistryItem(principal, item).allowed)
@@ -581,7 +581,10 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
             policyDecision: "allow",
             metadata: {
               atomId: atom.id,
-              targetType: changeset.targetType
+              targetType: changeset.targetType,
+              sourceIds: atom.sourceIds,
+              sourceUri: input.sourceUri,
+              sourceTitle: input.sourceTitle
             }
           },
           tenantId,
@@ -593,7 +596,7 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
         await insertChangeset(tx, changeset);
         await insertEvent(tx, event);
 
-        return { atom, changeset };
+        return { atom, changeset, event };
       });
     },
 

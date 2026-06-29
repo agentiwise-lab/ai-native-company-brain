@@ -40,7 +40,9 @@ a {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -647,6 +649,133 @@ h2 {
   white-space: nowrap;
 }
 
+.workbenchPanel {
+  overflow: hidden;
+}
+
+.workbenchGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.workbenchForm {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.workbenchForm label {
+  display: grid;
+  gap: 6px;
+}
+
+.workbenchForm label span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.workbenchForm input,
+.workbenchForm select,
+.workbenchForm textarea {
+  inline-size: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfb;
+  color: var(--ink);
+  padding: 10px 11px;
+}
+
+.workbenchForm textarea {
+  min-height: 118px;
+  resize: vertical;
+}
+
+.workbenchForm input:focus,
+.workbenchForm select:focus,
+.workbenchForm textarea:focus {
+  border-color: rgba(17, 107, 85, 0.7);
+  outline: 3px solid rgba(17, 107, 85, 0.12);
+}
+
+.workbenchForm button {
+  border: 0;
+  border-radius: 8px;
+  background: var(--green);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 800;
+  padding: 11px 12px;
+}
+
+.workbenchForm button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.workbenchTwo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: 10px;
+}
+
+.workbenchResult,
+.workbenchError,
+.citationCard {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.workbenchResult {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.workbenchResult p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.workbenchError {
+  border-color: rgba(162, 64, 58, 0.25);
+  background: #fae8e6;
+  color: var(--red);
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.citationCard {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.citationCard span {
+  display: block;
+  color: var(--muted);
+}
+
+.citationStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.citationStats span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-2);
+  padding: 4px 8px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
 .connectionGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -743,6 +872,7 @@ h2 {
 
   .topBar,
   .heroConsole,
+  .workbenchGrid,
   .layoutGrid {
     grid-template-columns: 1fr;
   }
@@ -790,6 +920,10 @@ h2 {
   }
 
   .check {
+    grid-template-columns: 1fr;
+  }
+
+  .workbenchTwo {
     grid-template-columns: 1fr;
   }
 

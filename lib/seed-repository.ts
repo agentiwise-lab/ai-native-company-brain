@@ -34,7 +34,11 @@ import type {
 } from "./repository-contract";
 
 function getDemoPrincipal(id = "usr_admin") {
-  return principals.find((principal) => principal.id === id) ?? principals[0];
+  const principal = principals.find((candidate) => candidate.id === id);
+  if (!principal) {
+    throw new Error(`Principal ${id} was not found.`);
+  }
+  return principal;
 }
 
 function includesText(value: string, query: string) {
@@ -52,7 +56,7 @@ function createCandidateAtom(input: CommitBrainInput, principal: Principal): Kno
     atomType: "claim",
     tier: input.tier ?? "team",
     ownerId: principal.id,
-    sourceIds: [],
+    sourceIds: input.sourceIds ?? [],
     acl: {
       teams: principal.teams,
       roles: ["admin", "reviewer", "operator", "agent"],
@@ -65,7 +69,7 @@ function createCandidateAtom(input: CommitBrainInput, principal: Principal): Kno
     reviewDueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     createdAt,
     updatedAt: createdAt,
-    tags: ["candidate", "agent-commit"]
+    tags: input.sourceUri ? ["candidate", "agent-commit", "source-linked"] : ["candidate", "agent-commit"]
   };
 }
 
@@ -129,7 +133,7 @@ export function createSeedRepository(): BrainRepository {
         return includesText(atom.title, query) || includesText(atom.body, query) || atom.tags.some((tag) => includesText(tag, query));
       });
 
-      const citations = matches.length > 0 ? matches : readable.slice(0, 3);
+      const citations = query.trim() ? matches : readable.slice(0, 3);
       const retrievedRegistry = registry.filter((item) => canDiscoverRegistryItem(principal, item).allowed).slice(0, 4);
       const event: BrainEvent = {
         id: `evt_query_${Date.now()}`,
@@ -166,8 +170,24 @@ export function createSeedRepository(): BrainRepository {
       const principal = getDemoPrincipal(input.principalId);
       const atom = createCandidateAtom(input, principal);
       const changeset = createAtomChangeset(atom, principal);
+      const event: BrainEvent = {
+        id: `evt_changeset_${Date.now()}`,
+        tenantId: atom.tenantId,
+        actorId: principal.id,
+        action: "changeset.open",
+        targetId: changeset.id,
+        targetType: "changeset",
+        policyDecision: "allow",
+        metadata: {
+          atomId: atom.id,
+          sourceIds: atom.sourceIds,
+          sourceUri: input.sourceUri,
+          sourceTitle: input.sourceTitle
+        },
+        createdAt: new Date().toISOString()
+      };
 
-      return { atom, changeset };
+      return { atom, changeset, event };
     },
 
     async lineage(atomId: string): Promise<LineageResult> {
