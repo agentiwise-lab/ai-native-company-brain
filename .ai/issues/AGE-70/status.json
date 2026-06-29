@@ -1,0 +1,14 @@
+{
+  "identifier": "AGE-70",
+  "title": "Composio-backed Slack ingestion",
+  "url": "https://linear.app/agentiwise/issue/AGE-70/composio-backed-slack-ingestion",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/slack-composio-ingestion.test.ts",
+    "npm run typecheck",
+    "npm test",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-29T13:58:00.000Z"
+}

@@ -721,6 +721,12 @@ h2 {
   gap: 10px;
 }
 
+.connectorButtonRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .workbenchResult,
 .workbenchError,
 .citationCard {

@@ -23,6 +23,7 @@ import { bootstrapTenantFromForm } from "@/app/setup/actions";
 import { composioControlPlane, type ComposioState } from "@/lib/composio-control-plane";
 import { composioIngestionPipeline, type ComposioIngestionState } from "@/lib/composio-ingestion";
 import { BrainWorkbench } from "@/app/brain-workbench";
+import { SlackConnectorConsole } from "@/app/slack-connector-console";
 import type { BrainTier, Changeset, CronRun, DashboardSnapshot, RegistryItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -595,6 +596,13 @@ export default async function Home() {
           <ComposioPanel state={composio} />
           <IngestionPanel state={ingestion} />
         </section>
+
+        <SlackConnectorConsole
+          tenantId={tenantId}
+          principalId={snapshot.principal.id}
+          accounts={composio.connectedAccounts}
+          artifacts={ingestion.artifacts.filter((artifact) => artifact.connector === "slack")}
+        />
 
         <section className="layoutGrid" id="scheduler">
           <CronConsole runs={snapshot.cronRuns} items={snapshot.registry} />
