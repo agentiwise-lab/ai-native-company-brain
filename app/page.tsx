@@ -21,6 +21,7 @@ import { generateAllAdapters } from "@/lib/adapters";
 import { agentExportService } from "@/lib/agent-exports";
 import { packageDistributionService } from "@/lib/package-distribution";
 import { durableScheduler } from "@/lib/durable-scheduler";
+import { cronOutputDelivery } from "@/lib/cron-output-delivery";
 import { artifactProcessingPipeline } from "@/lib/artifact-processing";
 import { candidateExtractionWorker } from "@/lib/candidate-extraction";
 import { memoryConflictWorkflow } from "@/lib/memory-conflicts";
@@ -53,7 +54,7 @@ const tierLabels: Record<BrainTier, string> = {
 };
 
 function statusClass(status: string) {
-  if (["published", "approved", "passed", "succeeded", "merged", "active", "configured"].includes(status)) {
+  if (["published", "approved", "passed", "succeeded", "delivered", "suppressed", "merged", "active", "configured"].includes(status)) {
     return "status statusGood";
   }
   if (["review", "warning", "needs-approval", "checks-running", "pending", "queued", "running", "retried"].includes(status)) {
@@ -494,6 +495,80 @@ async function DurableSchedulerPanel() {
               <small>{run.toolInvocationIds.length} tool invocation(s)</small>
             </div>
             <span className={statusClass(run.status)}>{run.status}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+async function CronOutputPanel() {
+  const state = await cronOutputDelivery.getState();
+  const deliveries = state.deliveries.slice(0, 5);
+  const approvals = state.approvals.filter((approval) => approval.status === "pending");
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Output gates</p>
+          <h2>Cron deliveries</h2>
+        </div>
+        <span className={statusClass(approvals.length > 0 ? "needs-approval" : "delivered")}>{approvals.length} approvals</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Deliveries</span>
+          <strong>{state.deliveries.length}</strong>
+          <small>Slack/email/webhook/dashboard</small>
+        </div>
+        <div className="connectionItem">
+          <span>Dashboard</span>
+          <strong>{state.dashboardOutputs.length}</strong>
+          <small>stored outputs</small>
+        </div>
+        <div className="connectionItem">
+          <span>Blocked</span>
+          <strong>{state.deliveries.filter((delivery) => ["blocked", "failed"].includes(delivery.status)).length}</strong>
+          <small>policy or transport</small>
+        </div>
+        <div className="connectionItem">
+          <span>Suppressed</span>
+          <strong>{state.deliveries.filter((delivery) => delivery.status === "suppressed").length}</strong>
+          <small>quiet window</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {deliveries.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No cron outputs delivered yet</strong>
+              <span>POST /api/v1/cron-output/deliver after a scheduler run produces output.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {deliveries.map((delivery) => (
+          <div className="connectionRow" key={delivery.id}>
+            <div>
+              <strong>
+                {delivery.destinationType} · {delivery.destinationId}
+              </strong>
+              <span>
+                {delivery.runId} · {delivery.destinationLink ?? delivery.reason ?? "recorded"}
+              </span>
+              <small>{delivery.toolInvocationId ? `tool ${delivery.toolInvocationId}` : delivery.dedupeKey ?? "audited"}</small>
+            </div>
+            <span className={statusClass(delivery.status)}>{delivery.status}</span>
+          </div>
+        ))}
+        {approvals.slice(0, 3).map((approval) => (
+          <div className="connectionRow" key={approval.id}>
+            <div>
+              <strong>{approval.destinationId}</strong>
+              <span>{approval.reviewerContext}</span>
+            </div>
+            <span className="status statusWarn">approval</span>
           </div>
         ))}
       </div>
@@ -1357,6 +1432,8 @@ export default async function Home() {
           <CronConsole runs={snapshot.cronRuns} items={snapshot.registry} />
           <DurableSchedulerPanel />
         </section>
+
+        <CronOutputPanel />
 
         <section className="layoutGrid">
           <CompatibilityPanel items={snapshot.registry} />

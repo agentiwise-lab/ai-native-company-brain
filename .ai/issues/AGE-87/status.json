@@ -1,0 +1,20 @@
+{
+  "identifier": "AGE-87",
+  "title": "Cron outputs to Slack, email, webhook, and dashboard via policy gates",
+  "url": "https://linear.app/agentiwise/issue/AGE-87/cron-outputs-to-slack-email-webhook-and-dashboard-via-policy-gates",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/cron-output-delivery.test.ts",
+    "npm run ci"
+  ],
+  "implementation": {
+    "service": "lib/cron-output-delivery.ts",
+    "routes": [
+      "app/api/v1/cron-output/deliver/route.ts",
+      "app/api/v1/cron-output/status/route.ts"
+    ],
+    "ui": "app/page.tsx"
+  },
+  "updatedAt": "2026-06-29T21:15:00.000+05:30"
+}
