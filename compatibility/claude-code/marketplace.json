@@ -1,0 +1,10 @@
+{
+  "name": "Company Brain Registry",
+  "plugins": [
+    {
+      "id": "company-brain",
+      "version": "0.1.0",
+      "description": "Curated company brain skills, MCP tools, and scheduled workflows."
+    }
+  ]
+}

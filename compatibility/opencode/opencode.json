@@ -1,0 +1,15 @@
+{
+  "mcp": {
+    "companyBrain": {
+      "url": "${COMPANY_BRAIN_URL}/api/mcp"
+    }
+  },
+  "permission": {
+    "skill": {
+      "*": "allow"
+    },
+    "tool": {
+      "brain-query": "ask"
+    }
+  }
+}

@@ -1,0 +1,419 @@
+import {
+  Activity,
+  Archive,
+  BadgeCheck,
+  BellRing,
+  Brain,
+  CalendarClock,
+  CircuitBoard,
+  GitPullRequest,
+  Layers3,
+  LockKeyhole,
+  Plug,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Waypoints
+} from "lucide-react";
+import { repository } from "@/lib/repository";
+import { generateAllAdapters } from "@/lib/adapters";
+import { summarizeQuality } from "@/lib/quality";
+import type { BrainTier, Changeset, CronRun, DashboardSnapshot, RegistryItem } from "@/lib/types";
+
+const tierLabels: Record<BrainTier, string> = {
+  individual: "Individual",
+  team: "Team",
+  department: "Department",
+  "company-main": "Company main",
+  "exec-protected": "Exec protected",
+  regulated: "Regulated"
+};
+
+function statusClass(status: string) {
+  if (["published", "approved", "passed", "succeeded", "merged"].includes(status)) {
+    return "status statusGood";
+  }
+  if (["review", "warning", "needs-approval", "checks-running"].includes(status)) {
+    return "status statusWarn";
+  }
+  if (["blocked", "failed", "rejected"].includes(status)) {
+    return "status statusBad";
+  }
+  return "status";
+}
+
+function MetricCard({
+  label,
+  value,
+  detail,
+  icon: Icon
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  icon: typeof Brain;
+}) {
+  return (
+    <section className="metricPanel">
+      <div className="metricIcon">
+        <Icon size={18} />
+      </div>
+      <div>
+        <p className="metricLabel">{label}</p>
+        <p className="metricValue">{value}</p>
+        <p className="metricDetail">{detail}</p>
+      </div>
+    </section>
+  );
+}
+
+function TierRail({ snapshot }: { snapshot: DashboardSnapshot }) {
+  return (
+    <section className="panel tierPanel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Governed memory</p>
+          <h2>Brain tiers</h2>
+        </div>
+        <span className="status">review gated</span>
+      </div>
+      <div className="tierRail">
+        {snapshot.tiers.map((tier, index) => (
+          <div className="tierRow" key={tier.tier}>
+            <div className="tierIndex">{String(index + 1).padStart(2, "0")}</div>
+            <div className="tierBody">
+              <div className="tierTop">
+                <strong>{tierLabels[tier.tier]}</strong>
+                <span>{tier.openChangesets} open PRs</span>
+              </div>
+              <div className="tierBars">
+                <span style={{ inlineSize: `${Math.max(12, tier.atomCount * 28)}%` }} />
+                <span style={{ inlineSize: `${Math.max(12, tier.registryCount * 26)}%` }} />
+              </div>
+              <div className="tierMeta">
+                <span>{tier.atomCount} atoms</span>
+                <span>{tier.registryCount} registry items</span>
+                <span>{tier.staleCount} stale</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RegistryMatrix({ items }: { items: RegistryItem[] }) {
+  const grouped = items.reduce<Record<string, RegistryItem[]>>((acc, item) => {
+    acc[item.kind] ??= [];
+    acc[item.kind].push(item);
+    return acc;
+  }, {});
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Capabilities</p>
+          <h2>Registry by tier</h2>
+        </div>
+        <Plug size={20} />
+      </div>
+      <div className="registryGrid">
+        {Object.entries(grouped).map(([kind, group]) => (
+          <article className="registryGroup" key={kind}>
+            <div className="registryKind">{kind}</div>
+            {group.map((item) => (
+              <div className="registryItem" key={item.id}>
+                <div>
+                  <strong>{item.name}</strong>
+                  <span>{item.description}</span>
+                </div>
+                <div className="registryMeta">
+                  <span className={statusClass(item.status)}>{item.status}</span>
+                  <span>{tierLabels[item.tier]}</span>
+                  <span>{item.version}</span>
+                </div>
+              </div>
+            ))}
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ChangesetQueue({ changesets }: { changesets: Changeset[] }) {
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Promotion gate</p>
+          <h2>Review queue</h2>
+        </div>
+        <GitPullRequest size={20} />
+      </div>
+      <div className="changesetList">
+        {changesets.map((changeset) => (
+          <article className="changeset" key={changeset.id}>
+            <div className="changesetTop">
+              <div>
+                <strong>{changeset.title}</strong>
+                <p>{changeset.summary}</p>
+              </div>
+              <span className={statusClass(changeset.status)}>{changeset.status}</span>
+            </div>
+            <div className="checkList">
+              {changeset.checks.map((check) => (
+                <div className="check" key={check.id}>
+                  <span className={statusClass(check.status)}>{check.status}</span>
+                  <span>{check.label}</span>
+                  <small>{check.detail}</small>
+                </div>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CronConsole({ runs, items }: { runs: CronRun[]; items: RegistryItem[] }) {
+  const cronJobs = items.filter((item) => item.kind === "cronjob");
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Self-guided loops</p>
+          <h2>Scheduler</h2>
+        </div>
+        <CalendarClock size={20} />
+      </div>
+      <div className="cronShell">
+        {cronJobs.map((job) => (
+          <article className="cronJob" key={job.id}>
+            <div>
+              <strong>{job.name}</strong>
+              {"schedule" in job ? <span>{job.schedule} · {job.timezone}</span> : null}
+            </div>
+            <span className={statusClass(job.status)}>{job.status}</span>
+          </article>
+        ))}
+        <div className="runList">
+          {runs.map((run) => (
+            <div className="runRow" key={run.id}>
+              <span className={statusClass(run.status)}>{run.status}</span>
+              <p>{run.output}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CompatibilityPanel({ items }: { items: RegistryItem[] }) {
+  const adapters = generateAllAdapters(items);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Agent compatibility</p>
+          <h2>Generated packs</h2>
+        </div>
+        <CircuitBoard size={20} />
+      </div>
+      <div className="adapterGrid">
+        {adapters.map((adapter) => (
+          <article className="adapter" key={adapter.target}>
+            <strong>{adapter.target}</strong>
+            <span>{adapter.files.length} files</span>
+            <small>{adapter.files[0]?.path}</small>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AuditPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
+  return (
+    <section className="panel auditPanel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Lineage</p>
+          <h2>Audit trail</h2>
+        </div>
+        <Archive size={20} />
+      </div>
+      <div className="auditList">
+        {snapshot.events.map((event) => (
+          <div className="auditRow" key={event.id}>
+            <span>{event.createdAt.slice(11, 16)}</span>
+            <strong>{event.action}</strong>
+            <p>{event.targetId}</p>
+            <span className={statusClass(event.policyDecision)}>{event.policyDecision}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ArchitectureMap() {
+  const columns = [
+    ["Slack", "Email", "Docs", "Meetings", "Tickets", "CRM", "Code"],
+    ["Capture", "Extract", "Candidate atoms", "Knowledge PRs", "Reviewed merge"],
+    ["Individual", "Team", "Department", "Company main", "Protected"],
+    ["Tools", "Skills", "Plugins", "Cron jobs", "Policies"],
+    ["Codex", "Claude Code", "OpenCode", "MCP agents"]
+  ];
+
+  return (
+    <section className="architectureMap" aria-label="Architecture map">
+      {columns.map((column, columnIndex) => (
+        <div className="archColumn" key={column.join("-")}>
+          {column.map((item, itemIndex) => (
+            <div className={`archNode archNode${columnIndex}`} key={item}>
+              {itemIndex === 0 ? <span className="archDot" /> : null}
+              {item}
+            </div>
+          ))}
+        </div>
+      ))}
+    </section>
+  );
+}
+
+export default function Home() {
+  const snapshot = repository.dashboard();
+  const quality = summarizeQuality(snapshot.qualityScores);
+  const openChangesets = snapshot.changesets.filter((changeset) => !["merged", "rolled-back"].includes(changeset.status));
+  const publishedCapabilities = snapshot.registry.filter((item) => item.status === "published").length;
+
+  return (
+    <main className="appShell">
+      <aside className="sideNav">
+        <div className="brand">
+          <div className="brandMark">
+            <Brain size={22} />
+          </div>
+          <div>
+            <strong>Company Brain</strong>
+            <span>agent-native OS</span>
+          </div>
+        </div>
+        <nav>
+          <a href="#overview">
+            <Activity size={16} />
+            Overview
+          </a>
+          <a href="#tiers">
+            <Layers3 size={16} />
+            Tiers
+          </a>
+          <a href="#registry">
+            <Plug size={16} />
+            Registry
+          </a>
+          <a href="#scheduler">
+            <CalendarClock size={16} />
+            Scheduler
+          </a>
+          <a href="#audit">
+            <ShieldCheck size={16} />
+            Audit
+          </a>
+        </nav>
+        <div className="sideFooter">
+          <LockKeyhole size={16} />
+          <span>ACLs active · tenant demo</span>
+        </div>
+      </aside>
+
+      <section className="mainContent">
+        <header className="topBar">
+          <div>
+            <p className="eyebrow">Self-hosted control plane</p>
+            <h1>Govern memory, capabilities, and scheduled agents from one review system.</h1>
+          </div>
+          <div className="searchBox">
+            <Search size={16} />
+            <span>brain.query · registry.search · audit.trace</span>
+          </div>
+        </header>
+
+        <section className="heroConsole" id="overview">
+          <div className="heroCopy">
+            <span className="status statusGood">
+              <Sparkles size={13} />
+              MCP-ready
+            </span>
+            <h2>One substrate, two promotion rails.</h2>
+            <p>
+              Knowledge atoms and executable capabilities move through the same governed pipeline:
+              draft, checks, review, publish, monitor, rollback. Agents get only what policy allows.
+            </p>
+          </div>
+          <ArchitectureMap />
+        </section>
+
+        <section className="metricsGrid">
+          <MetricCard
+            icon={BadgeCheck}
+            label="Brain quality"
+            value={`${quality.average}%`}
+            detail={`${quality.riskCount} items need curation`}
+          />
+          <MetricCard
+            icon={GitPullRequest}
+            label="Open reviews"
+            value={String(openChangesets.length)}
+            detail="knowledge and registry PRs"
+          />
+          <MetricCard
+            icon={Plug}
+            label="Published capabilities"
+            value={String(publishedCapabilities)}
+            detail="skills, tools, policies, cron"
+          />
+          <MetricCard
+            icon={BellRing}
+            label="Cron runs"
+            value={String(snapshot.cronRuns.length)}
+            detail="audited scheduled workflows"
+          />
+        </section>
+
+        <section className="layoutGrid" id="tiers">
+          <TierRail snapshot={snapshot} />
+          <ChangesetQueue changesets={snapshot.changesets} />
+        </section>
+
+        <section id="registry">
+          <RegistryMatrix items={snapshot.registry} />
+        </section>
+
+        <section className="layoutGrid" id="scheduler">
+          <CronConsole runs={snapshot.cronRuns} items={snapshot.registry} />
+          <CompatibilityPanel items={snapshot.registry} />
+        </section>
+
+        <section id="audit">
+          <AuditPanel snapshot={snapshot} />
+        </section>
+
+        <footer className="footerBar">
+          <Waypoints size={16} />
+          <span>
+            API: <code>/api/v1/brain/query</code> · MCP: <code>/api/mcp</code> · Docs:{" "}
+            <code>docs/implementation-design.md</code>
+          </span>
+        </footer>
+      </section>
+    </main>
+  );
+}

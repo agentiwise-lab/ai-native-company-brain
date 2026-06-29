@@ -1,0 +1,79 @@
+flowchart LR
+  subgraph Governance["Governance layer"]
+    SSO["SSO / SCIM"]
+    ACL["RBAC + ABAC"]
+    Owners["CODEOWNERS-style reviewers"]
+    Retention["Retention + exports + compliance"]
+  end
+
+  subgraph Inputs["Passive capture"]
+    Slack["Slack"]
+    Email["Email"]
+    Docs["Docs"]
+    Meetings["Meetings"]
+    Tickets["Tickets"]
+    CRM["CRM"]
+    Code["Code"]
+    Transcripts["Agent transcripts"]
+  end
+
+  subgraph Composio["Composio integration layer"]
+    AuthConfigs["Auth configs"]
+    Accounts["Connected accounts"]
+    Toolkits["Toolkit / action discovery"]
+    ToolExec["Tool execution"]
+  end
+
+  subgraph Pipeline["Memory compiler"]
+    Capture["Capture"]
+    Extract["Extract atoms"]
+    Candidates["Candidate memories"]
+    PRs["Knowledge PRs"]
+    Merge["Reviewed merge"]
+  end
+
+  subgraph Brain["Brain tiers"]
+    Individual["Individual"]
+    Team["Team"]
+    Department["Department"]
+    Main["Company main"]
+    Protected["Exec protected"]
+  end
+
+  subgraph Registry["Capability registry"]
+    Tools["Tools"]
+    Skills["Skills"]
+    Plugins["Plugins"]
+    Cron["Cron jobs"]
+    Policies["Policies"]
+  end
+
+  subgraph Agents["Agent-native surfaces"]
+    Codex["Codex"]
+    Claude["Claude Code"]
+    OpenCode["OpenCode"]
+    MCP["Generic MCP agents"]
+  end
+
+  subgraph Foundation["Self-host foundation"]
+    Postgres["Postgres"]
+    Vector["pgvector"]
+    ObjectStore["Object storage"]
+    Ledger["BrainEvent ledger"]
+    Queue["Redis / queue"]
+    Scheduler["Scheduler"]
+    Audit["Audit log"]
+  end
+
+  Inputs --> Composio --> Capture --> Extract --> Candidates --> PRs --> Merge --> Brain
+  Composio --> Registry
+  Brain <--> Registry
+  Registry --> Agents
+  Brain --> Agents
+  Governance --> Pipeline
+  Governance --> Brain
+  Governance --> Registry
+  Foundation --> Pipeline
+  Foundation --> Brain
+  Foundation --> Registry
+  Foundation --> Agents

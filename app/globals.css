@@ -1,0 +1,651 @@
+:root {
+  --bg: #f6f7f4;
+  --panel: #ffffff;
+  --panel-2: #eef2ee;
+  --ink: #111713;
+  --muted: #5c665e;
+  --faint: #879088;
+  --line: #dce2dd;
+  --green: #116b55;
+  --green-2: #1b8a68;
+  --amber: #a96d2f;
+  --red: #a2403a;
+  --blue: #315f86;
+  --shadow: 0 18px 50px rgba(30, 40, 35, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background:
+    linear-gradient(90deg, rgba(17, 107, 85, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(17, 107, 85, 0.04) 1px, transparent 1px),
+    var(--bg);
+  background-size: 42px 42px;
+  color: var(--ink);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+code {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+  padding: 0.12rem 0.32rem;
+  color: var(--green);
+}
+
+.appShell {
+  display: grid;
+  grid-template-columns: 252px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sideNav {
+  position: sticky;
+  top: 0;
+  display: flex;
+  height: 100vh;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.78);
+  padding: 24px 18px;
+  backdrop-filter: blur(18px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.brandMark,
+.metricIcon {
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(17, 107, 85, 0.24);
+  background: #e7f2ec;
+  color: var(--green);
+}
+
+.brandMark {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+}
+
+.brand strong,
+.registryItem strong,
+.changeset strong,
+.cronJob strong,
+.adapter strong {
+  display: block;
+}
+
+.brand span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.sideNav nav {
+  display: grid;
+  gap: 6px;
+}
+
+.sideNav a,
+.sideFooter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  color: var(--muted);
+  padding: 10px 12px;
+  font-size: 0.92rem;
+}
+
+.sideNav a:hover,
+.sideNav a:focus-visible {
+  background: var(--panel-2);
+  color: var(--ink);
+  outline: none;
+}
+
+.sideFooter {
+  margin-top: auto;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.mainContent {
+  display: grid;
+  gap: 22px;
+  min-width: 0;
+  padding: 26px;
+}
+
+.topBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--green);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+h1 {
+  max-width: 900px;
+  font-size: clamp(2rem, 4.4vw, 4.2rem);
+  line-height: 0.97;
+}
+
+h2 {
+  font-size: 1.08rem;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 330px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 11px 13px;
+  color: var(--muted);
+  box-shadow: var(--shadow);
+}
+
+.heroConsole {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.35fr);
+  gap: 24px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #15211c;
+  color: #edf4ef;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.heroCopy {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 310px;
+}
+
+.heroCopy h2 {
+  max-width: 12ch;
+  font-size: clamp(2rem, 4vw, 4.6rem);
+  line-height: 0.92;
+}
+
+.heroCopy p {
+  max-width: 56ch;
+  color: #bccbc3;
+  line-height: 1.55;
+}
+
+.architectureMap {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.archColumn {
+  display: grid;
+  align-content: stretch;
+  gap: 10px;
+}
+
+.archNode {
+  position: relative;
+  min-height: 44px;
+  border: 1px solid rgba(237, 244, 239, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  color: #edf4ef;
+  font-size: 0.84rem;
+}
+
+.archNode1 {
+  border-color: rgba(49, 95, 134, 0.55);
+}
+
+.archNode2 {
+  border-color: rgba(27, 138, 104, 0.64);
+}
+
+.archNode3 {
+  border-color: rgba(169, 109, 47, 0.64);
+}
+
+.archNode4 {
+  border-color: rgba(237, 244, 239, 0.28);
+}
+
+.archDot {
+  position: absolute;
+  inset-block-start: 11px;
+  inset-inline-end: 11px;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--green-2);
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.metricPanel,
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow);
+}
+
+.metricPanel {
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+}
+
+.metricIcon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+}
+
+.metricLabel,
+.metricDetail {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.metricValue {
+  margin: 3px 0;
+  font-size: 1.85rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.layoutGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 22px;
+}
+
+.panel {
+  min-width: 0;
+  padding: 18px;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-2);
+  padding: 4px 8px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.statusGood {
+  border-color: rgba(17, 107, 85, 0.24);
+  background: #e5f4ec;
+  color: var(--green);
+}
+
+.statusWarn {
+  border-color: rgba(169, 109, 47, 0.25);
+  background: #fff2df;
+  color: var(--amber);
+}
+
+.statusBad {
+  border-color: rgba(162, 64, 58, 0.25);
+  background: #fae8e6;
+  color: var(--red);
+}
+
+.tierRail,
+.changesetList,
+.registryGrid,
+.cronShell,
+.auditList {
+  display: grid;
+  gap: 12px;
+}
+
+.tierRow {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.tierIndex {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--green);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.tierBody,
+.registryGroup,
+.changeset,
+.cronJob,
+.runList,
+.adapter,
+.auditRow {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.tierBody {
+  padding: 12px;
+}
+
+.tierTop,
+.changesetTop,
+.cronJob,
+.auditRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tierTop span,
+.tierMeta,
+.registryItem span,
+.registryMeta,
+.changeset p,
+.check small,
+.cronJob span,
+.adapter span,
+.adapter small,
+.auditRow p {
+  color: var(--muted);
+}
+
+.tierBars {
+  display: grid;
+  gap: 5px;
+  margin: 10px 0;
+}
+
+.tierBars span {
+  display: block;
+  height: 7px;
+  max-width: 100%;
+  border-radius: 999px;
+}
+
+.tierBars span:first-child {
+  background: var(--green);
+}
+
+.tierBars span:last-child {
+  background: var(--amber);
+}
+
+.tierMeta,
+.registryMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.76rem;
+}
+
+.registryGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.registryGroup {
+  overflow: hidden;
+}
+
+.registryKind {
+  border-bottom: 1px solid var(--line);
+  background: var(--panel-2);
+  padding: 10px 12px;
+  color: var(--green);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.registryItem {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.registryItem + .registryItem {
+  border-top: 1px solid var(--line);
+}
+
+.registryItem span {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.changeset {
+  padding: 14px;
+}
+
+.changeset p {
+  margin: 5px 0 0;
+  line-height: 1.45;
+}
+
+.checkList {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.check {
+  display: grid;
+  grid-template-columns: auto 130px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  font-size: 0.84rem;
+}
+
+.cronJob {
+  align-items: center;
+  padding: 12px;
+}
+
+.cronJob span {
+  display: block;
+  margin-top: 4px;
+}
+
+.runList {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.runRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.runRow p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.adapterGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.adapter {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+}
+
+.adapter small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auditRow {
+  display: grid;
+  grid-template-columns: 58px 150px minmax(0, 1fr) auto;
+  align-items: center;
+  padding: 11px 12px;
+}
+
+.auditRow > span:first-child {
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.auditRow p {
+  margin: 0;
+}
+
+.footerBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.86rem;
+  padding: 8px 2px 22px;
+}
+
+@media (max-width: 1120px) {
+  .appShell {
+    grid-template-columns: 1fr;
+  }
+
+  .sideNav {
+    position: static;
+    height: auto;
+  }
+
+  .sideNav nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .sideFooter {
+    display: none;
+  }
+
+  .topBar,
+  .heroConsole,
+  .layoutGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .metricsGrid,
+  .registryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .mainContent {
+    padding: 16px;
+  }
+
+  .sideNav {
+    padding: 16px;
+  }
+
+  .sideNav nav,
+  .metricsGrid,
+  .registryGrid,
+  .adapterGrid,
+  .architectureMap {
+    grid-template-columns: 1fr;
+  }
+
+  .searchBox {
+    min-width: 0;
+  }
+
+  .heroCopy {
+    min-height: 220px;
+  }
+
+  .check {
+    grid-template-columns: 1fr;
+  }
+
+  .auditRow {
+    grid-template-columns: 1fr;
+  }
+}

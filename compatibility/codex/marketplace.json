@@ -1,0 +1,11 @@
+{
+  "name": "Company Brain Registry",
+  "plugins": [
+    {
+      "id": "company-brain",
+      "name": "Company Brain",
+      "description": "Governed organizational memory, skills, registry, cron, and audit tools.",
+      "version": "0.1.0"
+    }
+  ]
+}
