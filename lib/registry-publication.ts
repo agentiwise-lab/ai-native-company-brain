@@ -1,6 +1,8 @@
 import { existsSync } from "node:fs";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { validateAdapterGeneration } from "./adapters";
+import { registry as seedRegistry } from "./seed";
 import type { BrainEvent, Changeset, RegistryItem, ReviewCheck } from "./types";
 
 export type RegistryPublication = {
@@ -28,6 +30,7 @@ export type RegistryPublicationStore = {
 
 type PipelineOptions = {
   store?: RegistryPublicationStore;
+  registryItems?: RegistryItem[];
   now?: () => string;
   id?: (prefix: string) => string;
   tenantId?: string;
@@ -102,10 +105,11 @@ function rollbackTarget(item: RegistryItem) {
   return "rollbackTarget" in item && item.rollbackTarget ? item.rollbackTarget : "previous";
 }
 
-function evaluateChecks(input: EvaluateInput): ReviewCheck[] {
+function evaluateChecks(input: EvaluateInput, registryItems: RegistryItem[]): ReviewCheck[] {
   const item = input.item;
   const evalCount = "evals" in item ? item.evals.length : 1;
   const security = securityFindings(item);
+  const adapterValidation = validateAdapterGeneration(item, registryItems);
   return [
     check("lint", "Manifest lint", item.ownerId && item.version && item.slug ? "passed" : "failed", "Canonical package fields were validated."),
     check("sandbox", "Sandbox tests", input.sandboxPassed === false ? "failed" : "passed", input.sandboxPassed === false ? "Sandbox tests failed." : "Sandbox tests passed or were not required for this package."),
@@ -113,7 +117,12 @@ function evaluateChecks(input: EvaluateInput): ReviewCheck[] {
     check("security", "Security scan", security.length === 0 ? "passed" : "failed", security.length === 0 ? "No unsafe permissions, exposed secrets, prompt injection, or audit issues found." : security.join(", ")),
     check("owner_review", "Owner review", input.changeset.ownerId ? "passed" : "failed", input.changeset.ownerId ? `Owner ${input.changeset.ownerId} assigned.` : "Missing owner."),
     check("tier_approval", "Tier approval", input.changeset.reviewers.length > 0 ? "passed" : "failed", input.changeset.reviewers.length > 0 ? `${input.changeset.reviewers.length} reviewer(s) assigned.` : "No reviewer assigned."),
-    check("adapters", "Adapter generation", item.adapterTargets.length > 0 ? "passed" : "failed", item.adapterTargets.length > 0 ? `${item.adapterTargets.length} adapter targets configured.` : "No adapter targets configured."),
+    check(
+      "adapters",
+      "Adapter generation",
+      adapterValidation.ok ? "passed" : "failed",
+      adapterValidation.ok ? `${item.adapterTargets.length} adapter targets configured and validated.` : adapterValidation.errors.join(" ")
+    ),
     check("rollback", "Rollback metadata", rollbackTarget(item) ? "passed" : "failed", `Rollback target: ${rollbackTarget(item)}.`)
   ];
 }
@@ -132,6 +141,7 @@ function decisionFor(checks: ReviewCheck[], reviewerId?: string) {
 
 export function createRegistryPublicationPipeline(options: PipelineOptions = {}) {
   const store = options.store ?? createFileStore();
+  const registryItems = options.registryItems ?? seedRegistry;
   const now = options.now ?? (() => new Date().toISOString());
   const id = options.id ?? defaultId;
   const tenantId = options.tenantId ?? process.env.COMPANY_BRAIN_TENANT_ID ?? "tenant_demo";
@@ -152,7 +162,7 @@ export function createRegistryPublicationPipeline(options: PipelineOptions = {})
     async evaluate(input: EvaluateInput) {
       const state = await load();
       const timestamp = now();
-      const checks = evaluateChecks(input);
+      const checks = evaluateChecks(input, registryItems);
       const decision = decisionFor(checks, input.reviewerId);
       state.checks = [
         ...checks.map((candidate) => ({
@@ -171,7 +181,7 @@ export function createRegistryPublicationPipeline(options: PipelineOptions = {})
     async publish(input: PublishInput) {
       const state = await load();
       const timestamp = now();
-      const checks = evaluateChecks(input);
+      const checks = evaluateChecks(input, registryItems);
       const decision = decisionFor(checks, input.reviewerId);
       state.checks = [
         ...checks.map((candidate) => ({

@@ -1,0 +1,23 @@
+{
+  "identifier": "AGE-84",
+  "title": "Generate Codex, Claude Code, OpenCode, and generic agent exports",
+  "url": "https://linear.app/agentiwise/issue/AGE-84/generate-codex-claude-code-opencode-and-generic-agent-exports",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/agent-exports.test.ts tests/registry-publication.test.ts",
+    "npm test",
+    "npm run build"
+  ],
+  "implementation": {
+    "service": "lib/agent-exports.ts",
+    "adapters": "lib/adapters.ts",
+    "routes": [
+      "app/api/v1/registry/exports/route.ts",
+      "app/api/v1/registry/exports/[id]/download/route.ts"
+    ],
+    "publicationGate": "lib/registry-publication.ts",
+    "ui": "app/page.tsx"
+  },
+  "updatedAt": "2026-06-29T20:53:00.000+05:30"
+}

@@ -136,6 +136,14 @@ describe("registry publication gate", () => {
     expect(result.checks).toEqual(expect.arrayContaining([expect.objectContaining({ id: "adapters", status: "failed" })]));
   });
 
+  it("fails adapter generation when permission mappings are unsupported", async () => {
+    const pipeline = createRegistryPublicationPipeline({ store: createStore() });
+    const result = await pipeline.evaluate({ item: skill({ permissions: ["vendor:unknown"] }), changeset: changeset() });
+
+    expect(result.decision.allowed).toBe(false);
+    expect(result.checks.find((check) => check.id === "adapters")?.detail).toMatch(/Unsupported permission mapping/i);
+  });
+
   it("blocks publish without reviewer context", async () => {
     const pipeline = createRegistryPublicationPipeline({ store: createStore() });
     const item = skill();

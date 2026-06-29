@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { repository } from "@/lib/repository";
 import { generateAllAdapters } from "@/lib/adapters";
+import { agentExportService } from "@/lib/agent-exports";
 import { artifactProcessingPipeline } from "@/lib/artifact-processing";
 import { candidateExtractionWorker } from "@/lib/candidate-extraction";
 import { memoryConflictWorkflow } from "@/lib/memory-conflicts";
@@ -421,8 +422,11 @@ function CronConsole({ runs, items }: { runs: CronRun[]; items: RegistryItem[] }
   );
 }
 
-function CompatibilityPanel({ items }: { items: RegistryItem[] }) {
+async function CompatibilityPanel({ items }: { items: RegistryItem[] }) {
   const adapters = generateAllAdapters(items);
+  const exports = await agentExportService.getState();
+  const bundles = exports.bundles.slice(0, 5);
+  const failures = exports.failures.slice(0, 3);
 
   return (
     <section className="panel">
@@ -440,6 +444,62 @@ function CompatibilityPanel({ items }: { items: RegistryItem[] }) {
             <span>{adapter.files.length} files</span>
             <small>{adapter.files[0]?.path}</small>
           </article>
+        ))}
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Bundles</span>
+          <strong>{exports.bundles.length}</strong>
+          <small>downloadable JSON</small>
+        </div>
+        <div className="connectionItem">
+          <span>Targets</span>
+          <strong>{new Set(exports.bundles.map((bundle) => bundle.target)).size}</strong>
+          <small>Codex/Claude/OpenCode/MCP</small>
+        </div>
+        <div className="connectionItem">
+          <span>Failures</span>
+          <strong>{exports.failures.length}</strong>
+          <small>block publication</small>
+        </div>
+        <div className="connectionItem">
+          <span>Latest</span>
+          <strong>{bundles[0]?.version ?? "none"}</strong>
+          <small>{bundles[0]?.slug ?? "waiting for export"}</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {bundles.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No generated bundles yet</strong>
+              <span>POST /api/v1/registry/exports with a published package id to generate downloads.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {bundles.map((bundle) => (
+          <div className="connectionRow" key={bundle.id}>
+            <div>
+              <strong>
+                {bundle.target} · {bundle.slug}
+              </strong>
+              <span>
+                v{bundle.version} · {bundle.files.length} files · {bundle.downloadUrl}
+              </span>
+              <small>Rollback target {bundle.manifest.package.rollbackTarget}</small>
+            </div>
+            <span className="status statusGood">ready</span>
+          </div>
+        ))}
+        {failures.map((failure) => (
+          <div className="connectionRow" key={failure.id}>
+            <div>
+              <strong>{failure.slug ?? failure.packageId}</strong>
+              <span>{failure.errors.join(" ")}</span>
+            </div>
+            <span className="status statusBad">blocked</span>
+          </div>
         ))}
       </div>
     </section>
