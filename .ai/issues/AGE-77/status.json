@@ -1,0 +1,15 @@
+{
+  "identifier": "AGE-77",
+  "title": "Extract candidate atoms and assign owners automatically",
+  "url": "https://linear.app/agentiwise/issue/AGE-77/extract-candidate-atoms-and-assign-owners-automatically",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/candidate-extraction.test.ts",
+    "npm test -- tests/candidate-extraction.test.ts tests/candidate-extraction-api.test.ts",
+    "npm run typecheck",
+    "npm test",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-29T14:10:00.000Z"
+}

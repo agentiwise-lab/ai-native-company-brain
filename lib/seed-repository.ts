@@ -61,27 +61,27 @@ function createCandidateAtom(input: CommitBrainInput, principal: Principal): Kno
     tenantId: "tenant_demo",
     title: input.title,
     body: input.body,
-    atomType: "claim",
+    atomType: input.atomType ?? "claim",
     tier: input.tier ?? "team",
-    ownerId: principal.id,
+    ownerId: input.ownerId ?? principal.id,
     sourceIds: input.sourceIds ?? [],
-    acl: {
+    acl: input.acl ?? {
       teams: principal.teams,
       roles: ["admin", "reviewer", "operator", "agent"],
       sensitivity: "internal"
     },
     status: "candidate",
     version: 1,
-    confidence: 0.62,
-    freshness: 1,
+    confidence: input.confidence ?? 0.62,
+    freshness: input.freshness ?? 1,
     reviewDueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     createdAt,
     updatedAt: createdAt,
-    tags: input.sourceUri ? ["candidate", "agent-commit", "source-linked"] : ["candidate", "agent-commit"]
+    tags: input.tags ?? (input.sourceUri ? ["candidate", "agent-commit", "source-linked"] : ["candidate", "agent-commit"])
   };
 }
 
-function createAtomChangeset(atom: KnowledgeAtom, principal: Principal): Changeset {
+function createAtomChangeset(atom: KnowledgeAtom, principal: Principal, input: CommitBrainInput): Changeset {
   const createdAt = new Date().toISOString();
   const hasSourceEvidence = atom.sourceIds.length > 0 || atom.tags.includes("source-linked");
 
@@ -93,24 +93,25 @@ function createAtomChangeset(atom: KnowledgeAtom, principal: Principal): Changes
     targetId: atom.id,
     tier: atom.tier,
     authorId: principal.id,
-    ownerId: principal.id,
-    reviewers: ["usr_reviewer"],
-    status: "review",
-    summary: "Agent-created candidate memory awaiting source evidence and owner review.",
+    ownerId: atom.ownerId,
+    reviewers: input.reviewers ?? ["usr_reviewer"],
+    status: input.changesetStatus ?? "review",
+    summary: input.changesetSummary ?? "Agent-created candidate memory awaiting source evidence and owner review.",
     checks: [
       {
         id: "check_owner",
         label: "Owner assigned",
         status: "passed",
-        detail: `${principal.name} owns the candidate atom.`
+        detail: `${atom.ownerId} owns the candidate atom.`
       },
-        {
-          id: "check_sources",
-          label: "Source evidence",
-          status: hasSourceEvidence ? "passed" : "failed",
-          detail: hasSourceEvidence ? "Source evidence is attached." : "No source artifacts are attached yet."
-        }
-      ],
+      {
+        id: "check_sources",
+        label: "Source evidence",
+        status: hasSourceEvidence ? "passed" : "failed",
+        detail: hasSourceEvidence ? "Source evidence is attached." : "No source artifacts are attached yet."
+      },
+      ...(input.reviewChecks ?? [])
+    ],
     createdAt,
     updatedAt: createdAt
   };
@@ -195,7 +196,7 @@ export function createSeedRepository(): BrainRepository {
     async commitBrain(input: CommitBrainInput) {
       const principal = getDemoPrincipal(input.principalId);
       const atom = createCandidateAtom(input, principal);
-      const changeset = createAtomChangeset(atom, principal);
+      const changeset = createAtomChangeset(atom, principal, input);
       const event: BrainEvent = {
         id: seedId("evt_changeset"),
         tenantId: atom.tenantId,
@@ -208,7 +209,10 @@ export function createSeedRepository(): BrainRepository {
           atomId: atom.id,
           sourceIds: atom.sourceIds,
           sourceUri: input.sourceUri,
-          sourceTitle: input.sourceTitle
+          sourceTitle: input.sourceTitle,
+          atomType: atom.atomType,
+          ownerId: atom.ownerId,
+          confidence: atom.confidence
         },
         createdAt: new Date().toISOString()
       };

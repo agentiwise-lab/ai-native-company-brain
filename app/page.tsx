@@ -18,6 +18,7 @@ import {
 import { repository } from "@/lib/repository";
 import { generateAllAdapters } from "@/lib/adapters";
 import { artifactProcessingPipeline } from "@/lib/artifact-processing";
+import { candidateExtractionWorker } from "@/lib/candidate-extraction";
 import { summarizeQuality } from "@/lib/quality";
 import { getSetupState } from "@/lib/setup";
 import { bootstrapTenantFromForm } from "@/app/setup/actions";
@@ -482,6 +483,70 @@ async function ArtifactProcessingPanel() {
   );
 }
 
+async function CandidateExtractionPanel() {
+  const state = await candidateExtractionWorker.getState();
+  const latestRun = state.runs[0];
+  const candidates = state.candidates.slice(0, 5);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Candidate memory</p>
+          <h2>Atom extraction</h2>
+        </div>
+        <span className={statusClass(latestRun?.status ?? "pending")}>{latestRun?.status ?? "pending"}</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Runs</span>
+          <strong>{state.runs.length}</strong>
+          <small>extract workers</small>
+        </div>
+        <div className="connectionItem">
+          <span>Candidates</span>
+          <strong>{state.candidates.length}</strong>
+          <small>opened as PRs</small>
+        </div>
+        <div className="connectionItem">
+          <span>Latest output</span>
+          <strong>{latestRun?.candidateCount ?? 0}</strong>
+          <small>{latestRun?.skippedChunkCount ?? 0} skipped chunks</small>
+        </div>
+        <div className="connectionItem">
+          <span>Failures</span>
+          <strong>{state.runs.filter((run) => run.status === "failed").length}</strong>
+          <small>retry after review</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {candidates.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No candidate atoms extracted yet</strong>
+              <span>POST /api/v1/candidate-extraction/run after artifacts are indexed.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {candidates.map((candidate) => (
+          <div className="connectionRow" key={candidate.id}>
+            <div>
+              <strong>{candidate.atom.title}</strong>
+              <span>
+                {candidate.atom.atomType} · {candidate.targetTier} · owner {candidate.ownerId} · PR{" "}
+                {candidate.changeset.id}
+              </span>
+              <small>{candidate.sourceEvidence.excerpt}</small>
+            </div>
+            <span className={statusClass(candidate.changeset.status)}>{candidate.changeset.status}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function AuditPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
   return (
     <section className="panel auditPanel">
@@ -708,6 +773,8 @@ export default async function Home() {
         <ConnectorOpsPanel />
 
         <ArtifactProcessingPanel />
+
+        <CandidateExtractionPanel />
 
         <SlackConnectorConsole
           tenantId={tenantId}

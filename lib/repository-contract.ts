@@ -3,6 +3,7 @@ import type {
   BrainQueryResult,
   BrainTier,
   Changeset,
+  ChangesetStatus,
   CronJobDefinition,
   CronRun,
   DashboardSnapshot,
@@ -10,7 +11,8 @@ import type {
   KnowledgeAtom,
   Principal,
   RegistryItem,
-  RegistryKind
+  RegistryKind,
+  ReviewCheck
 } from "./types";
 
 export type CommitBrainInput = {
@@ -21,6 +23,16 @@ export type CommitBrainInput = {
   sourceIds?: string[];
   sourceUri?: string;
   sourceTitle?: string;
+  atomType?: KnowledgeAtom["atomType"];
+  ownerId?: string;
+  reviewers?: string[];
+  acl?: KnowledgeAtom["acl"];
+  confidence?: number;
+  freshness?: number;
+  tags?: string[];
+  changesetSummary?: string;
+  changesetStatus?: ChangesetStatus;
+  reviewChecks?: ReviewCheck[];
 };
 
 export type CreateRegistryChangesetInput = {
