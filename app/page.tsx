@@ -22,6 +22,7 @@ import { candidateExtractionWorker } from "@/lib/candidate-extraction";
 import { memoryConflictWorkflow } from "@/lib/memory-conflicts";
 import { memoryQualityLoop } from "@/lib/memory-quality-loop";
 import { summarizeQuality } from "@/lib/quality";
+import { registryImportService } from "@/lib/registry-import";
 import { getSetupState } from "@/lib/setup";
 import { bootstrapTenantFromForm } from "@/app/setup/actions";
 import { composioControlPlane, type ComposioState } from "@/lib/composio-control-plane";
@@ -153,6 +154,68 @@ function RegistryMatrix({ items }: { items: RegistryItem[] }) {
               </div>
             ))}
           </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+async function RegistryImportPanel() {
+  const state = await registryImportService.getState();
+  const imports = state.imports.slice(0, 5);
+  const draftChangesets = state.changesets.filter((changeset) => changeset.status === "draft");
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Package intake</p>
+          <h2>Registry imports</h2>
+        </div>
+        <span className="status">{draftChangesets.length} drafts</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Imports</span>
+          <strong>{state.imports.length}</strong>
+          <small>canonical packages</small>
+        </div>
+        <div className="connectionItem">
+          <span>Changesets</span>
+          <strong>{state.changesets.length}</strong>
+          <small>review required</small>
+        </div>
+        <div className="connectionItem">
+          <span>Invalid</span>
+          <strong>{state.imports.filter((item) => item.status === "invalid").length}</strong>
+          <small>needs manifest fixes</small>
+        </div>
+        <div className="connectionItem">
+          <span>Drafts</span>
+          <strong>{draftChangesets.length}</strong>
+          <small>not published</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {imports.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No packages imported yet</strong>
+              <span>POST /api/v1/registry/import with a canonical package manifest.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {imports.map((item) => (
+          <div className="connectionRow" key={item.id}>
+            <div>
+              <strong>{item.slug}</strong>
+              <span>
+                {item.packageKind} · {item.version} · {item.packageId}
+              </span>
+            </div>
+            <span className={statusClass(item.status)}>{item.status}</span>
+          </div>
         ))}
       </div>
     </section>
@@ -896,6 +959,8 @@ export default async function Home() {
         <section id="registry">
           <RegistryMatrix items={snapshot.registry} />
         </section>
+
+        <RegistryImportPanel />
 
         <section className="layoutGrid" id="connections">
           <ComposioPanel state={composio} />
