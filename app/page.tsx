@@ -23,6 +23,7 @@ import { memoryConflictWorkflow } from "@/lib/memory-conflicts";
 import { memoryQualityLoop } from "@/lib/memory-quality-loop";
 import { summarizeQuality } from "@/lib/quality";
 import { registryImportService } from "@/lib/registry-import";
+import { registryPublicationPipeline } from "@/lib/registry-publication";
 import { getSetupState } from "@/lib/setup";
 import { bootstrapTenantFromForm } from "@/app/setup/actions";
 import { composioControlPlane, type ComposioState } from "@/lib/composio-control-plane";
@@ -215,6 +216,68 @@ async function RegistryImportPanel() {
               </span>
             </div>
             <span className={statusClass(item.status)}>{item.status}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+async function RegistryPublicationPanel() {
+  const state = await registryPublicationPipeline.getState();
+  const checks = state.checks.slice(0, 5);
+  const failedChecks = state.checks.filter((check) => check.status === "failed").length;
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Publication gate</p>
+          <h2>Registry checks</h2>
+        </div>
+        <span className={statusClass(failedChecks > 0 ? "failed" : "passed")}>{failedChecks} failed</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Checks</span>
+          <strong>{state.checks.length}</strong>
+          <small>lint/sandbox/evals/security</small>
+        </div>
+        <div className="connectionItem">
+          <span>Published</span>
+          <strong>{state.publications.length}</strong>
+          <small>with rollback metadata</small>
+        </div>
+        <div className="connectionItem">
+          <span>Audit</span>
+          <strong>{state.auditEvents.length}</strong>
+          <small>publish events</small>
+        </div>
+        <div className="connectionItem">
+          <span>Canary</span>
+          <strong>{state.publications[0]?.canaryPercent ?? 0}%</strong>
+          <small>latest rollout</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {checks.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No publication checks yet</strong>
+              <span>POST /api/v1/registry/publication/check before publishing.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {checks.map((check) => (
+          <div className="connectionRow" key={`${check.packageId}:${check.version}:${check.id}`}>
+            <div>
+              <strong>{check.label}</strong>
+              <span>
+                {check.packageId}@{check.version} · {check.detail}
+              </span>
+            </div>
+            <span className={statusClass(check.status)}>{check.status}</span>
           </div>
         ))}
       </div>
@@ -961,6 +1024,8 @@ export default async function Home() {
         </section>
 
         <RegistryImportPanel />
+
+        <RegistryPublicationPanel />
 
         <section className="layoutGrid" id="connections">
           <ComposioPanel state={composio} />

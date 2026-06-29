@@ -1,0 +1,14 @@
+{
+  "identifier": "AGE-82",
+  "title": "Gate package publication with sandbox, evals, and security scan",
+  "url": "https://linear.app/agentiwise/issue/AGE-82/gate-package-publication-with-sandbox-evals-and-security-scan",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/registry-publication.test.ts",
+    "npm run typecheck",
+    "npm test",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-29T15:40:00.000Z"
+}
