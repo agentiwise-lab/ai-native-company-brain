@@ -15,6 +15,7 @@
     "issue:finish": "node scripts/linear-issue-loop.mjs finish",
     "issue:pick": "node scripts/linear-issue-loop.mjs pick",
     "issue:verify": "node scripts/linear-issue-loop.mjs verify",
+    "mcp:smoke": "tsx scripts/mcp-smoke-test.ts",
     "start": "next start",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",

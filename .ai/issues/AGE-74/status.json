@@ -1,0 +1,15 @@
+{
+  "identifier": "AGE-74",
+  "title": "Authenticated MCP MVP bridging brain tools and Composio sessions",
+  "url": "https://linear.app/agentiwise/issue/AGE-74/authenticated-mcp-mvp-bridging-brain-tools-and-composio-sessions",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/mcp-auth.test.ts",
+    "npm run mcp:smoke",
+    "npm run typecheck",
+    "npm test",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-29T14:21:00.000Z"
+}

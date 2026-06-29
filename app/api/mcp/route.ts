@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { handleMcpRequest } from "@/lib/mcp";
+import { authenticateMcpRequest, handleMcpRequest } from "@/lib/mcp";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  return NextResponse.json(await handleMcpRequest(body));
+  return NextResponse.json(await handleMcpRequest(body, authenticateMcpRequest(request)));
 }
 
 export async function GET() {
