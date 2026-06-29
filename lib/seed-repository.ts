@@ -9,7 +9,7 @@ import {
   qualityScores,
   registry
 } from "./seed";
-import { canDiscoverRegistryItem, canReadAtom, enforceChangesetMerge } from "./policy";
+import { canDiscoverRegistryItem, canReadAtom, canReviewChangeset, enforceChangesetMerge } from "./policy";
 import type {
   BrainEvent,
   BrainQueryResult,
@@ -128,21 +128,20 @@ export function createSeedRepository(): BrainRepository {
 
     async queryBrain(query: string, principalId?: string, requestedTier?: BrainTier): Promise<BrainQueryResult> {
       const principal = getDemoPrincipal(principalId);
-      const readable = atoms
+      const candidateAtoms = atoms
         .filter((atom) => (requestedTier ? atom.tier === requestedTier : true))
-        .map((atom) => ({ atom, policy: canReadAtom(principal, atom) }))
+        .filter((atom) => {
+          if (!query.trim()) {
+            return true;
+          }
+          return includesText(atom.title, query) || includesText(atom.body, query) || atom.tags.some((tag) => includesText(tag, query));
+        });
+      const evaluated = candidateAtoms.map((atom) => ({ atom, policy: canReadAtom(principal, atom) }));
+      const readable = evaluated
         .filter(({ policy }) => policy.allowed)
         .map(({ atom }) => atom);
 
-      const matches = readable.filter((atom) => {
-        if (!query.trim()) {
-          return true;
-        }
-
-        return includesText(atom.title, query) || includesText(atom.body, query) || atom.tags.some((tag) => includesText(tag, query));
-      });
-
-      const citations = query.trim() ? matches : readable.slice(0, 3);
+      const citations = query.trim() ? readable : readable.slice(0, 3);
       const retrievedRegistry = registry.filter((item) => canDiscoverRegistryItem(principal, item).allowed).slice(0, 4);
       const event: BrainEvent = {
         id: seedId("evt_query"),
@@ -159,6 +158,24 @@ export function createSeedRepository(): BrainRepository {
         },
         createdAt: new Date().toISOString()
       };
+      const denyEvents: BrainEvent[] = evaluated
+        .filter(({ policy }) => !policy.allowed)
+        .map(({ atom, policy }) => ({
+          id: seedId("evt_policy_deny"),
+          tenantId: atom.tenantId,
+          actorId: principal.id,
+          action: "query",
+          targetId: atom.id,
+          targetType: "atom",
+          policyDecision: "deny",
+          metadata: {
+            query,
+            requestedTier,
+            reason: policy.reason
+          },
+          createdAt: new Date().toISOString()
+        }));
+      events.unshift(event, ...denyEvents);
 
       return {
         answer:
@@ -167,7 +184,7 @@ export function createSeedRepository(): BrainRepository {
             : `Found ${citations.length} governed memories. Highest authority match: ${citations[0].title}.`,
         citations,
         retrievedRegistry,
-        events: [event],
+        events: [event, ...denyEvents],
         policy: {
           allowed: true,
           reasons: ["Query results were filtered by tier, role, team, and sensitivity ACLs."]
@@ -227,6 +244,11 @@ export function createSeedRepository(): BrainRepository {
         throw new Error(`Memory changeset ${input.changesetId} was not found.`);
       }
 
+      const reviewPolicy = canReviewChangeset(reviewer, changeset);
+      if (!reviewPolicy.allowed) {
+        throw new Error(reviewPolicy.reason);
+      }
+
       const atom = atoms.find((candidate) => candidate.id === changeset.targetId);
       if (atom) {
         atom.updatedAt = new Date().toISOString();
@@ -283,6 +305,18 @@ export function createSeedRepository(): BrainRepository {
           decision: {
             allowed: false,
             reasons: [`Memory changeset ${input.changesetId} was not found.`]
+          }
+        };
+      }
+
+      const reviewPolicy = canReviewChangeset(reviewer, changeset);
+      if (!reviewPolicy.allowed) {
+        return {
+          changeset,
+          events: [],
+          decision: {
+            allowed: false,
+            reasons: [reviewPolicy.reason]
           }
         };
       }

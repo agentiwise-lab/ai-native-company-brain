@@ -1,4 +1,4 @@
-import { brainTiers, type BrainTier, type KnowledgeAtom, type Principal, type RegistryItem } from "./types";
+import { brainTiers, type BrainTier, type Changeset, type KnowledgeAtom, type Principal, type RegistryItem } from "./types";
 
 const tierRank = new Map<BrainTier, number>(brainTiers.map((tier, index) => [tier, index]));
 
@@ -63,6 +63,60 @@ export function canDiscoverRegistryItem(principal: Principal, item: RegistryItem
   return {
     allowed: true,
     reason: "Allowed by registry discovery policy."
+  };
+}
+
+export function canInvokeRegistryItem(principal: Principal, item: RegistryItem) {
+  if (!canAccessTier(principal, item.tier)) {
+    return {
+      allowed: false,
+      reason: `Principal cannot discover ${item.tier} registry items.`
+    };
+  }
+
+  if (item.kind === "tool" && item.permissions.some((permission) => permission.endsWith(":write")) && !["admin", "reviewer", "operator"].includes(principal.role)) {
+    return {
+      allowed: false,
+      reason: "Write-capable tools require an admin, reviewer, or operator."
+    };
+  }
+
+  const discovery = canDiscoverRegistryItem(principal, item);
+  if (!discovery.allowed) {
+    return discovery;
+  }
+
+  return {
+    allowed: true,
+    reason: "Allowed by tool invocation policy."
+  };
+}
+
+export function canReviewChangeset(principal: Principal, changeset: Changeset) {
+  if (!canAccessTier(principal, changeset.tier)) {
+    return {
+      allowed: false,
+      reason: `Principal cannot review ${changeset.tier} changesets.`
+    };
+  }
+
+  if (!["admin", "reviewer", "operator"].includes(principal.role)) {
+    return {
+      allowed: false,
+      reason: "Only admins, reviewers, and operators can review changesets."
+    };
+  }
+
+  if (changeset.reviewers.length > 0 && !changeset.reviewers.includes(principal.id) && principal.role !== "admin") {
+    return {
+      allowed: false,
+      reason: "Principal is not assigned as a reviewer for this changeset."
+    };
+  }
+
+  return {
+    allowed: true,
+    reason: "Allowed by review policy."
   };
 }
 

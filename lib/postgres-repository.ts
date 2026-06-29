@@ -1,5 +1,5 @@
 import { Pool, type PoolClient } from "pg";
-import { canDiscoverRegistryItem, canReadAtom, enforceChangesetMerge } from "./policy";
+import { canDiscoverRegistryItem, canReadAtom, canReviewChangeset, enforceChangesetMerge } from "./policy";
 import type {
   BrainEvent,
   BrainQueryResult,
@@ -544,18 +544,19 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
          ORDER BY updated_at DESC`,
         [tenantId]
       );
-      const readable = atomResult.rows
+      const candidateAtoms = atomResult.rows
         .map(toAtom)
-        .map((atom) => ({ atom, policy: canReadAtom(principal, atom) }))
+        .filter((atom) => {
+          if (!query.trim()) {
+            return true;
+          }
+          return includesText(atom.title, query) || includesText(atom.body, query) || atom.tags.some((tag) => includesText(tag, query));
+        });
+      const evaluated = candidateAtoms.map((atom) => ({ atom, policy: canReadAtom(principal, atom) }));
+      const readable = evaluated
         .filter(({ policy }) => policy.allowed)
         .map(({ atom }) => atom);
-      const matches = readable.filter((atom) => {
-        if (!query.trim()) {
-          return true;
-        }
-        return includesText(atom.title, query) || includesText(atom.body, query) || atom.tags.some((tag) => includesText(tag, query));
-      });
-      const citations = query.trim() ? matches : readable.slice(0, 3);
+      const citations = query.trim() ? readable : readable.slice(0, 3);
       const retrievedRegistry = registryResult.rows
         .map(toRegistryItem)
         .filter((item) => canDiscoverRegistryItem(principal, item).allowed)
@@ -577,7 +578,31 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
         now(),
         id
       );
+      const denyEvents: BrainEvent[] = evaluated
+        .filter(({ policy }) => !policy.allowed)
+        .map(({ atom, policy }) =>
+          createEvent(
+            {
+              actorId: principal.id,
+              action: "query",
+              targetId: atom.id,
+              targetType: "atom",
+              policyDecision: "deny",
+              metadata: {
+                query,
+                requestedTier,
+                reason: policy.reason
+              }
+            },
+            tenantId,
+            now(),
+            id
+          )
+        );
       await insertEvent(client, event);
+      for (const denyEvent of denyEvents) {
+        await insertEvent(client, denyEvent);
+      }
 
       return {
         answer:
@@ -586,7 +611,7 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
             : `Found ${citations.length} governed memories. Highest authority match: ${citations[0].title}.`,
         citations,
         retrievedRegistry,
-        events: [event],
+        events: [event, ...denyEvents],
         policy: {
           allowed: true,
           reasons: ["Query results were filtered by tier, role, team, and sensitivity ACLs."]
@@ -670,6 +695,11 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
 
         if (!changeset || changeset.targetType !== "atom") {
           throw new Error(`Memory changeset ${input.changesetId} was not found.`);
+        }
+
+        const reviewPolicy = canReviewChangeset(reviewer, changeset);
+        if (!reviewPolicy.allowed) {
+          throw new Error(reviewPolicy.reason);
         }
 
         const atom = await selectAtomById(tx, changeset.targetId);
@@ -759,6 +789,19 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
       }
 
       const atom = await selectAtomById(client, changeset.targetId);
+      const reviewer = await selectPrincipal(client, input.reviewerId);
+      const reviewPolicy = canReviewChangeset(reviewer, changeset);
+      if (!reviewPolicy.allowed) {
+        return {
+          atom,
+          changeset,
+          events: [],
+          decision: {
+            allowed: false,
+            reasons: [reviewPolicy.reason]
+          }
+        };
+      }
       const checkDecision = enforceChangesetMerge(changeset.checks);
       const approvalDecision =
         changeset.status === "approved"
@@ -780,7 +823,6 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
       }
 
       return transaction(async (tx) => {
-        const reviewer = await selectPrincipal(tx, input.reviewerId);
         const timestamp = now();
         const updatedAtom: KnowledgeAtom = {
           ...atom,

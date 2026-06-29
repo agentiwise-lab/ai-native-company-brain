@@ -31,7 +31,7 @@ export function statusForBrainError(error: unknown) {
     return error.status;
   }
 
-  if (error instanceof Error && /principal/i.test(error.message)) {
+  if (error instanceof Error && /(principal|not allowed|cannot review|reviewer|forbidden|unauthorized)/i.test(error.message)) {
     return 403;
   }
 

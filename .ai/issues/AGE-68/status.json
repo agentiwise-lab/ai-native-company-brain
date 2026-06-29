@@ -1,0 +1,14 @@
+{
+  "identifier": "AGE-68",
+  "title": "Enforce ACL inheritance in retrieval, review, and Composio tool access",
+  "url": "https://linear.app/agentiwise/issue/AGE-68/enforce-acl-inheritance-in-retrieval-review-and-composio-tool-access",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/acl-enforcement.test.ts",
+    "npm run typecheck",
+    "npm test",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-29T13:43:30.000Z"
+}
