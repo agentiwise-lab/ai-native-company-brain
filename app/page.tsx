@@ -23,6 +23,7 @@ import { bootstrapTenantFromForm } from "@/app/setup/actions";
 import { composioControlPlane, type ComposioState } from "@/lib/composio-control-plane";
 import { composioIngestionPipeline, type ComposioIngestionState } from "@/lib/composio-ingestion";
 import { BrainWorkbench } from "@/app/brain-workbench";
+import { FlexibleConnectorConsole } from "@/app/flexible-connector-console";
 import { GoogleConnectorConsole } from "@/app/google-connector-console";
 import { SlackConnectorConsole } from "@/app/slack-connector-console";
 import { WorkConnectorConsole } from "@/app/work-connector-console";
@@ -616,6 +617,12 @@ export default async function Home() {
           principalId={snapshot.principal.id}
           accounts={composio.connectedAccounts}
           artifacts={ingestion.artifacts.filter((artifact) => artifact.connector === "github" || artifact.connector === "linear")}
+        />
+
+        <FlexibleConnectorConsole
+          principalId={snapshot.principal.id}
+          accounts={composio.connectedAccounts}
+          artifacts={ingestion.artifacts.filter((artifact) => artifact.connector === "notion" || artifact.connector === "webhook")}
         />
 
         <section className="layoutGrid" id="scheduler">
