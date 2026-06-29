@@ -22,6 +22,7 @@ import { getSetupState } from "@/lib/setup";
 import { bootstrapTenantFromForm } from "@/app/setup/actions";
 import { composioControlPlane, type ComposioState } from "@/lib/composio-control-plane";
 import { composioIngestionPipeline, type ComposioIngestionState } from "@/lib/composio-ingestion";
+import { connectorOps } from "@/lib/connector-ops";
 import { BrainWorkbench } from "@/app/brain-workbench";
 import { FlexibleConnectorConsole } from "@/app/flexible-connector-console";
 import { GoogleConnectorConsole } from "@/app/google-connector-console";
@@ -377,6 +378,47 @@ function IngestionPanel({ state }: { state: ComposioIngestionState }) {
   );
 }
 
+async function ConnectorOpsPanel() {
+  const health = await connectorOps.health();
+  const connectors = health.connectors.slice(0, 5);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Operations</p>
+          <h2>Connector health</h2>
+        </div>
+        <span className="status">{connectors.length} connectors</span>
+      </div>
+      <div className="connectionList">
+        {connectors.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No connector runs yet</strong>
+              <span>Health appears after a connected account or ingestion run exists.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {connectors.map((connector) => (
+          <div className="connectionRow" key={`${connector.connector}:${connector.connectedAccountId}`}>
+            <div>
+              <strong>{connector.connector}</strong>
+              <span>
+                {connector.connectedAccountId} · {connector.latestRun?.status ?? "no runs"} · checkpoint{" "}
+                {connector.lastCheckpoint?.cursor ?? "none"}
+              </span>
+              {connector.recentErrors[0] ? <small>{connector.recentErrors[0].guidance}</small> : null}
+            </div>
+            <span className={statusClass(connector.accountStatus)}>{connector.accountStatus}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function AuditPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
   return (
     <section className="panel auditPanel">
@@ -599,6 +641,8 @@ export default async function Home() {
           <ComposioPanel state={composio} />
           <IngestionPanel state={ingestion} />
         </section>
+
+        <ConnectorOpsPanel />
 
         <SlackConnectorConsole
           tenantId={tenantId}
