@@ -29,8 +29,12 @@ import type {
   CreateRegistryChangesetInput,
   CronRunResult,
   LineageResult,
+  MergeMemoryChangesetInput,
+  MergeMemoryChangesetResult,
   RegistryPublishResult,
-  RegistryRollbackResult
+  RegistryRollbackResult,
+  ReviewMemoryChangesetInput,
+  ReviewMemoryChangesetResult
 } from "./repository-contract";
 
 function getDemoPrincipal(id = "usr_admin") {
@@ -45,11 +49,15 @@ function includesText(value: string, query: string) {
   return value.toLowerCase().includes(query.toLowerCase());
 }
 
+function seedId(prefix: string) {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
 function createCandidateAtom(input: CommitBrainInput, principal: Principal): KnowledgeAtom {
   const createdAt = new Date().toISOString();
 
   return {
-    id: `atom_candidate_${Date.now()}`,
+    id: seedId("atom_candidate"),
     tenantId: "tenant_demo",
     title: input.title,
     body: input.body,
@@ -75,9 +83,10 @@ function createCandidateAtom(input: CommitBrainInput, principal: Principal): Kno
 
 function createAtomChangeset(atom: KnowledgeAtom, principal: Principal): Changeset {
   const createdAt = new Date().toISOString();
+  const hasSourceEvidence = atom.sourceIds.length > 0 || atom.tags.includes("source-linked");
 
   return {
-    id: `cs_${Date.now()}`,
+    id: seedId("cs"),
     tenantId: atom.tenantId,
     title: `Promote ${atom.title}`,
     targetType: "atom",
@@ -95,13 +104,13 @@ function createAtomChangeset(atom: KnowledgeAtom, principal: Principal): Changes
         status: "passed",
         detail: `${principal.name} owns the candidate atom.`
       },
-      {
-        id: "check_sources",
-        label: "Source evidence",
-        status: "failed",
-        detail: "No source artifacts are attached yet."
-      }
-    ],
+        {
+          id: "check_sources",
+          label: "Source evidence",
+          status: hasSourceEvidence ? "passed" : "failed",
+          detail: hasSourceEvidence ? "Source evidence is attached." : "No source artifacts are attached yet."
+        }
+      ],
     createdAt,
     updatedAt: createdAt
   };
@@ -136,7 +145,7 @@ export function createSeedRepository(): BrainRepository {
       const citations = query.trim() ? matches : readable.slice(0, 3);
       const retrievedRegistry = registry.filter((item) => canDiscoverRegistryItem(principal, item).allowed).slice(0, 4);
       const event: BrainEvent = {
-        id: `evt_query_${Date.now()}`,
+        id: seedId("evt_query"),
         tenantId: "tenant_demo",
         actorId: principal.id,
         action: "query",
@@ -171,7 +180,7 @@ export function createSeedRepository(): BrainRepository {
       const atom = createCandidateAtom(input, principal);
       const changeset = createAtomChangeset(atom, principal);
       const event: BrainEvent = {
-        id: `evt_changeset_${Date.now()}`,
+        id: seedId("evt_changeset"),
         tenantId: atom.tenantId,
         actorId: principal.id,
         action: "changeset.open",
@@ -187,6 +196,10 @@ export function createSeedRepository(): BrainRepository {
         createdAt: new Date().toISOString()
       };
 
+      atoms.unshift(atom);
+      changesets.unshift(changeset);
+      events.unshift(event);
+
       return { atom, changeset, event };
     },
 
@@ -199,6 +212,127 @@ export function createSeedRepository(): BrainRepository {
         edges: relatedEdges,
         events: sourceEvents,
         sources: atom ? atom.sourceIds : []
+      };
+    },
+
+    async listChangesets(targetType?: "atom" | RegistryKind): Promise<Changeset[]> {
+      return changesets.filter((changeset) => (targetType ? changeset.targetType === targetType : true));
+    },
+
+    async reviewMemoryChangeset(input: ReviewMemoryChangesetInput): Promise<ReviewMemoryChangesetResult> {
+      const reviewer = getDemoPrincipal(input.reviewerId);
+      const changeset = changesets.find((candidate) => candidate.id === input.changesetId);
+
+      if (!changeset || changeset.targetType !== "atom") {
+        throw new Error(`Memory changeset ${input.changesetId} was not found.`);
+      }
+
+      const atom = atoms.find((candidate) => candidate.id === changeset.targetId);
+      if (atom) {
+        atom.updatedAt = new Date().toISOString();
+        if (input.editedTitle) {
+          atom.title = input.editedTitle;
+        }
+        if (input.editedBody) {
+          atom.body = input.editedBody;
+        }
+      }
+
+      if (input.action === "approve") {
+        changeset.status = "approved";
+      }
+      if (input.action === "reject") {
+        changeset.status = "rolled-back";
+        if (atom) {
+          atom.status = "rejected";
+        }
+      }
+      if (input.action === "request-changes") {
+        changeset.status = "blocked";
+      }
+
+      changeset.updatedAt = new Date().toISOString();
+      const event: BrainEvent = {
+        id: seedId("evt_review"),
+        tenantId: changeset.tenantId,
+        actorId: reviewer.id,
+        action: "review",
+        targetId: changeset.targetId,
+        targetType: "atom",
+        policyDecision: "allow",
+        metadata: {
+          changesetId: changeset.id,
+          reviewAction: input.action,
+          note: input.note,
+          edited: Boolean(input.editedTitle || input.editedBody)
+        },
+        createdAt: new Date().toISOString()
+      };
+      events.unshift(event);
+
+      return { atom, changeset, event };
+    },
+
+    async mergeMemoryChangeset(input: MergeMemoryChangesetInput): Promise<MergeMemoryChangesetResult> {
+      const reviewer = getDemoPrincipal(input.reviewerId);
+      const changeset = changesets.find((candidate) => candidate.id === input.changesetId);
+
+      if (!changeset || changeset.targetType !== "atom") {
+        return {
+          events: [],
+          decision: {
+            allowed: false,
+            reasons: [`Memory changeset ${input.changesetId} was not found.`]
+          }
+        };
+      }
+
+      const atom = atoms.find((candidate) => candidate.id === changeset.targetId);
+      const checkDecision = enforceChangesetMerge(changeset.checks);
+      const approvalDecision =
+        changeset.status === "approved"
+          ? { allowed: true, reasons: ["Changeset is approved."] }
+          : { allowed: false, reasons: ["Changeset must be approved before merge."] };
+      const decision = checkDecision.allowed && approvalDecision.allowed
+        ? { allowed: true, reasons: ["All required checks passed."] }
+        : {
+            allowed: false,
+            reasons: [...checkDecision.reasons.filter((reason) => reason !== "All required checks passed."), ...approvalDecision.reasons.filter((reason) => reason !== "Changeset is approved.")]
+          };
+
+      if (!decision.allowed || !atom) {
+        return { atom, changeset, events: [], decision };
+      }
+
+      atom.status = "approved";
+      atom.tier = input.targetTier ?? changeset.tier;
+      atom.version += 1;
+      atom.updatedAt = new Date().toISOString();
+      changeset.status = "merged";
+      changeset.updatedAt = atom.updatedAt;
+
+      const mergeEvent: BrainEvent = {
+        id: seedId("evt_merge"),
+        tenantId: changeset.tenantId,
+        actorId: reviewer.id,
+        action: "merge",
+        targetId: atom.id,
+        targetType: "atom",
+        policyDecision: "allow",
+        metadata: {
+          changesetId: changeset.id,
+          targetTier: atom.tier
+        },
+        createdAt: new Date().toISOString()
+      };
+      events.unshift(mergeEvent);
+      const reviewEvent = events.find((event) => event.targetId === atom.id && event.action === "review");
+
+      return {
+        atom,
+        changeset,
+        events: reviewEvent ? [reviewEvent, mergeEvent] : [mergeEvent],
+        decision
       };
     },
 

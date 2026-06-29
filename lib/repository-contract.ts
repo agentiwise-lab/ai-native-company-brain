@@ -29,6 +29,21 @@ export type CreateRegistryChangesetInput = {
   principalId?: string;
 };
 
+export type ReviewMemoryChangesetInput = {
+  changesetId: string;
+  reviewerId: string;
+  action: "approve" | "reject" | "request-changes";
+  note?: string;
+  editedTitle?: string;
+  editedBody?: string;
+};
+
+export type MergeMemoryChangesetInput = {
+  changesetId: string;
+  reviewerId: string;
+  targetTier?: BrainTier;
+};
+
 export type LineageResult = {
   atom?: KnowledgeAtom;
   edges: DependencyEdge[];
@@ -56,12 +71,31 @@ export type CronRunResult = {
   run?: CronRun;
 };
 
+export type ReviewMemoryChangesetResult = {
+  atom?: KnowledgeAtom;
+  changeset: Changeset;
+  event: BrainEvent;
+};
+
+export type MergeMemoryChangesetResult = {
+  atom?: KnowledgeAtom;
+  changeset?: Changeset;
+  events: BrainEvent[];
+  decision: {
+    allowed: boolean;
+    reasons: string[];
+  };
+};
+
 export type BrainRepository = {
   dashboard(): Promise<DashboardSnapshot>;
   principal(id?: string): Promise<Principal>;
   queryBrain(query: string, principalId?: string, requestedTier?: BrainTier): Promise<BrainQueryResult>;
   commitBrain(input: CommitBrainInput): Promise<{ atom: KnowledgeAtom; changeset: Changeset; event: BrainEvent }>;
   lineage(atomId: string): Promise<LineageResult>;
+  listChangesets(targetType?: "atom" | RegistryKind): Promise<Changeset[]>;
+  reviewMemoryChangeset(input: ReviewMemoryChangesetInput): Promise<ReviewMemoryChangesetResult>;
+  mergeMemoryChangeset(input: MergeMemoryChangesetInput): Promise<MergeMemoryChangesetResult>;
   searchRegistry(query?: string, kind?: RegistryKind, principalId?: string): Promise<RegistryItem[]>;
   createRegistryChangeset(input: CreateRegistryChangesetInput): Promise<Changeset | null>;
   publishRegistryItem(id: string): Promise<RegistryPublishResult>;

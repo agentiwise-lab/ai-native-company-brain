@@ -22,8 +22,12 @@ import type {
   CreateRegistryChangesetInput,
   CronRunResult,
   LineageResult,
+  MergeMemoryChangesetInput,
+  MergeMemoryChangesetResult,
   RegistryPublishResult,
-  RegistryRollbackResult
+  RegistryRollbackResult,
+  ReviewMemoryChangesetInput,
+  ReviewMemoryChangesetResult
 } from "./repository-contract";
 
 export type SqlClient = {
@@ -242,6 +246,8 @@ function createCandidateAtom(input: CommitBrainInput, principal: Principal, tena
 }
 
 function createAtomChangeset(atom: KnowledgeAtom, principal: Principal, now: string, id: (prefix: string) => string): Changeset {
+  const hasSourceEvidence = atom.sourceIds.length > 0 || atom.tags.includes("source-linked");
+
   return {
     id: id("cs"),
     tenantId: atom.tenantId,
@@ -264,8 +270,8 @@ function createAtomChangeset(atom: KnowledgeAtom, principal: Principal, now: str
       {
         id: "check_sources",
         label: "Source evidence",
-        status: "failed",
-        detail: "No source artifacts are attached yet."
+        status: hasSourceEvidence ? "passed" : "failed",
+        detail: hasSourceEvidence ? "Source evidence is attached." : "No source artifacts are attached yet."
       }
     ],
     createdAt: now,
@@ -443,6 +449,28 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
     return result.rows[0] ? toRegistryItem(result.rows[0]) : undefined;
   }
 
+  async function selectChangesetById(sqlClient: SqlClient, changesetId: string) {
+    const result = await sqlClient.query<Row>(
+      `SELECT *
+       FROM changesets
+       WHERE tenant_id = $1 AND id = $2
+       LIMIT 1`,
+      [tenantId, changesetId]
+    );
+    return result.rows[0] ? toChangeset(result.rows[0]) : undefined;
+  }
+
+  async function selectAtomById(sqlClient: SqlClient, atomId: string) {
+    const result = await sqlClient.query<Row>(
+      `SELECT *
+       FROM knowledge_atoms
+       WHERE tenant_id = $1 AND id = $2
+       LIMIT 1`,
+      [tenantId, atomId]
+    );
+    return result.rows[0] ? toAtom(result.rows[0]) : undefined;
+  }
+
   async function selectLatestChangeset(sqlClient: SqlClient, itemId: string) {
     const result = await sqlClient.query<Row>(
       `SELECT *
@@ -614,6 +642,207 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
         events: eventResult.rows.map(toEvent),
         sources: atom ? atom.sourceIds : []
       };
+    },
+
+    async listChangesets(targetType?: "atom" | RegistryKind): Promise<Changeset[]> {
+      const result = targetType
+        ? await client.query<Row>(
+            `SELECT *
+             FROM changesets
+             WHERE tenant_id = $1 AND target_type = $2
+             ORDER BY updated_at DESC`,
+            [tenantId, targetType]
+          )
+        : await client.query<Row>(
+            `SELECT *
+             FROM changesets
+             WHERE tenant_id = $1
+             ORDER BY updated_at DESC`,
+            [tenantId]
+          );
+      return result.rows.map(toChangeset);
+    },
+
+    async reviewMemoryChangeset(input: ReviewMemoryChangesetInput): Promise<ReviewMemoryChangesetResult> {
+      return transaction(async (tx) => {
+        const reviewer = await selectPrincipal(tx, input.reviewerId);
+        const changeset = await selectChangesetById(tx, input.changesetId);
+
+        if (!changeset || changeset.targetType !== "atom") {
+          throw new Error(`Memory changeset ${input.changesetId} was not found.`);
+        }
+
+        const atom = await selectAtomById(tx, changeset.targetId);
+        const timestamp = now();
+        let nextChangesetStatus: Changeset["status"] = changeset.status;
+        let nextAtomStatus = atom?.status;
+
+        if (input.action === "approve") {
+          nextChangesetStatus = "approved";
+        }
+        if (input.action === "reject") {
+          nextChangesetStatus = "rolled-back";
+          nextAtomStatus = "rejected";
+        }
+        if (input.action === "request-changes") {
+          nextChangesetStatus = "blocked";
+        }
+
+        if (atom) {
+          await tx.query(
+            `UPDATE knowledge_atoms
+             SET title = $3, body = $4, status = $5, updated_at = $6
+             WHERE tenant_id = $1 AND id = $2`,
+            [
+              tenantId,
+              atom.id,
+              input.editedTitle ?? atom.title,
+              input.editedBody ?? atom.body,
+              nextAtomStatus ?? atom.status,
+              timestamp
+            ]
+          );
+        }
+
+        await tx.query(
+          `UPDATE changesets
+           SET status = $3, updated_at = $4
+           WHERE tenant_id = $1 AND id = $2`,
+          [tenantId, changeset.id, nextChangesetStatus, timestamp]
+        );
+
+        const updatedAtom = atom
+          ? {
+              ...atom,
+              title: input.editedTitle ?? atom.title,
+              body: input.editedBody ?? atom.body,
+              status: nextAtomStatus ?? atom.status,
+              updatedAt: timestamp
+            }
+          : undefined;
+        const updatedChangeset = { ...changeset, status: nextChangesetStatus, updatedAt: timestamp };
+        const event = createEvent(
+          {
+            actorId: reviewer.id,
+            action: "review",
+            targetId: changeset.targetId,
+            targetType: "atom",
+            policyDecision: "allow",
+            metadata: {
+              changesetId: changeset.id,
+              reviewAction: input.action,
+              note: input.note,
+              edited: Boolean(input.editedTitle || input.editedBody)
+            }
+          },
+          tenantId,
+          timestamp,
+          id
+        );
+
+        await insertEvent(tx, event);
+        return { atom: updatedAtom, changeset: updatedChangeset, event };
+      });
+    },
+
+    async mergeMemoryChangeset(input: MergeMemoryChangesetInput): Promise<MergeMemoryChangesetResult> {
+      const changeset = await selectChangesetById(client, input.changesetId);
+
+      if (!changeset || changeset.targetType !== "atom") {
+        return {
+          events: [],
+          decision: {
+            allowed: false,
+            reasons: [`Memory changeset ${input.changesetId} was not found.`]
+          }
+        };
+      }
+
+      const atom = await selectAtomById(client, changeset.targetId);
+      const checkDecision = enforceChangesetMerge(changeset.checks);
+      const approvalDecision =
+        changeset.status === "approved"
+          ? { allowed: true, reasons: ["Changeset is approved."] }
+          : { allowed: false, reasons: ["Changeset must be approved before merge."] };
+      const decision =
+        checkDecision.allowed && approvalDecision.allowed
+          ? { allowed: true, reasons: ["All required checks passed."] }
+          : {
+              allowed: false,
+              reasons: [
+                ...checkDecision.reasons.filter((reason) => reason !== "All required checks passed."),
+                ...approvalDecision.reasons.filter((reason) => reason !== "Changeset is approved.")
+              ]
+            };
+
+      if (!decision.allowed || !atom) {
+        return { atom, changeset, events: [], decision };
+      }
+
+      return transaction(async (tx) => {
+        const reviewer = await selectPrincipal(tx, input.reviewerId);
+        const timestamp = now();
+        const updatedAtom: KnowledgeAtom = {
+          ...atom,
+          status: "approved",
+          tier: input.targetTier ?? changeset.tier,
+          version: atom.version + 1,
+          updatedAt: timestamp
+        };
+        const updatedChangeset: Changeset = {
+          ...changeset,
+          status: "merged",
+          updatedAt: timestamp
+        };
+
+        await tx.query(
+          `UPDATE knowledge_atoms
+           SET status = 'approved', tier = $3, version = version + 1, updated_at = $4
+           WHERE tenant_id = $1 AND id = $2`,
+          [tenantId, atom.id, updatedAtom.tier, timestamp]
+        );
+        await tx.query(
+          `UPDATE changesets
+           SET status = 'merged', updated_at = $3
+           WHERE tenant_id = $1 AND id = $2`,
+          [tenantId, changeset.id, timestamp]
+        );
+
+        const mergeEvent = createEvent(
+          {
+            actorId: reviewer.id,
+            action: "merge",
+            targetId: atom.id,
+            targetType: "atom",
+            policyDecision: "allow",
+            metadata: {
+              changesetId: changeset.id,
+              targetTier: updatedAtom.tier
+            }
+          },
+          tenantId,
+          timestamp,
+          id
+        );
+        await insertEvent(tx, mergeEvent);
+
+        const reviewEventResult = await tx.query<Row>(
+          `SELECT *
+           FROM brain_events
+           WHERE tenant_id = $1 AND target_id = $2 AND action = 'review'
+           ORDER BY created_at DESC
+           LIMIT 1`,
+          [tenantId, atom.id]
+        );
+        const reviewEvent = reviewEventResult.rows[0] ? toEvent(reviewEventResult.rows[0]) : undefined;
+
+        return {
+          atom: updatedAtom,
+          changeset: updatedChangeset,
+          events: reviewEvent ? [reviewEvent, mergeEvent] : [mergeEvent],
+          decision
+        };
+      });
     },
 
     async searchRegistry(query = "", kind?: RegistryKind, principalId?: string): Promise<RegistryItem[]> {
