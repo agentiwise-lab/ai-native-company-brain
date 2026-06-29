@@ -552,11 +552,18 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
          WHERE tenant_id = $1`,
         [tenantId]
       );
+      const scoreResult = await client.query<Row>(
+        `SELECT *
+         FROM quality_scores
+         WHERE tenant_id = $1`,
+        [tenantId]
+      );
       const retrieval = rankHybridAtoms({
         query,
         principal,
         atoms: atomResult.rows.map(toAtom),
         edges: edgeResult.rows.map(toEdge),
+        qualityScores: scoreResult.rows.map(toQualityScore),
         requestedTier,
         limit: query.trim() ? 5 : 3
       });

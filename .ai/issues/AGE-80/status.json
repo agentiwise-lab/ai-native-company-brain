@@ -1,0 +1,15 @@
+{
+  "identifier": "AGE-80",
+  "title": "Quality scores, stale review, and demotion loop",
+  "url": "https://linear.app/agentiwise/issue/AGE-80/quality-scores-stale-review-and-demotion-loop",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/memory-quality-loop.test.ts",
+    "npm test -- tests/memory-quality-loop.test.ts tests/memory-quality-api.test.ts tests/hybrid-retrieval.test.ts",
+    "npm run typecheck",
+    "npm test",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-29T14:30:00.000Z"
+}

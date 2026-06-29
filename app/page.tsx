@@ -20,6 +20,7 @@ import { generateAllAdapters } from "@/lib/adapters";
 import { artifactProcessingPipeline } from "@/lib/artifact-processing";
 import { candidateExtractionWorker } from "@/lib/candidate-extraction";
 import { memoryConflictWorkflow } from "@/lib/memory-conflicts";
+import { memoryQualityLoop } from "@/lib/memory-quality-loop";
 import { summarizeQuality } from "@/lib/quality";
 import { getSetupState } from "@/lib/setup";
 import { bootstrapTenantFromForm } from "@/app/setup/actions";
@@ -614,6 +615,70 @@ async function MemoryConflictPanel() {
   );
 }
 
+async function MemoryQualityPanel() {
+  const state = await memoryQualityLoop.getState();
+  const openItems = state.queue.filter((item) => item.status === "open");
+  const queue = state.queue.slice(0, 5);
+  const average =
+    state.scores.length === 0 ? 0 : Math.round(state.scores.reduce((sum, score) => sum + score.score, 0) / state.scores.length);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Memory health</p>
+          <h2>Quality loop</h2>
+        </div>
+        <span className={statusClass(openItems.length > 0 ? "warning" : "passed")}>{openItems.length} reviews</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Average</span>
+          <strong>{average}%</strong>
+          <small>scored atoms</small>
+        </div>
+        <div className="connectionItem">
+          <span>Scores</span>
+          <strong>{state.scores.length}</strong>
+          <small>signal-backed</small>
+        </div>
+        <div className="connectionItem">
+          <span>Queue</span>
+          <strong>{state.queue.length}</strong>
+          <small>refresh/demote/retire</small>
+        </div>
+        <div className="connectionItem">
+          <span>Audit</span>
+          <strong>{state.auditEvents.length}</strong>
+          <small>review actions</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {queue.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No quality reviews queued yet</strong>
+              <span>POST /api/v1/memory-quality/run to score current atoms.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {queue.map((item) => (
+          <div className="connectionRow" key={item.id}>
+            <div>
+              <strong>{item.atomId}</strong>
+              <span>
+                {item.recommendedAction} · score {item.score}% · {item.reasons[0] ?? "Needs reviewer decision"}
+              </span>
+            </div>
+            <span className={statusClass(item.status)}>{item.status}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function AuditPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
   return (
     <section className="panel auditPanel">
@@ -844,6 +909,8 @@ export default async function Home() {
         <CandidateExtractionPanel />
 
         <MemoryConflictPanel />
+
+        <MemoryQualityPanel />
 
         <SlackConnectorConsole
           tenantId={tenantId}

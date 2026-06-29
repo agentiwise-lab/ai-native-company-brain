@@ -287,6 +287,7 @@ export type BrainQueryResult = {
         freshness: number;
         confidence: number;
         status: number;
+        quality: number;
       };
     }>;
     denied: Array<{

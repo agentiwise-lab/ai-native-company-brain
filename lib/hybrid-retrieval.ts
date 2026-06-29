@@ -1,5 +1,5 @@
 import { canReadAtom } from "./policy";
-import { brainTiers, type BrainTier, type DependencyEdge, type KnowledgeAtom, type Principal } from "./types";
+import { brainTiers, type BrainTier, type DependencyEdge, type KnowledgeAtom, type Principal, type QualityScore } from "./types";
 
 export type RetrievalFactors = {
   lexical: number;
@@ -10,6 +10,7 @@ export type RetrievalFactors = {
   freshness: number;
   confidence: number;
   status: number;
+  quality: number;
 };
 
 export type RetrievalRanking = {
@@ -40,6 +41,7 @@ type RankInput = {
   principal: Principal;
   atoms: KnowledgeAtom[];
   edges?: DependencyEdge[];
+  qualityScores?: QualityScore[];
   requestedTier?: BrainTier;
   limit?: number;
 };
@@ -164,7 +166,15 @@ function graphScore(atom: KnowledgeAtom, edges: DependencyEdge[]) {
   return 0;
 }
 
-function scoreAtom(atom: KnowledgeAtom, queryTokens: string[], expandedTokens: string[], queryVector: number[], edges: DependencyEdge[], hasQueryText: boolean): ScoredAtom {
+function scoreAtom(
+  atom: KnowledgeAtom,
+  queryTokens: string[],
+  expandedTokens: string[],
+  queryVector: number[],
+  edges: DependencyEdge[],
+  qualityByAtom: Map<string, QualityScore>,
+  hasQueryText: boolean
+): ScoredAtom {
   const candidateTokens = tokens(atomText(atom));
   const lexical = overlapScore(queryTokens, candidateTokens);
   const semantic = overlapScore(expandedTokens, candidateTokens);
@@ -175,6 +185,8 @@ function scoreAtom(atom: KnowledgeAtom, queryTokens: string[], expandedTokens: s
   const confidence = Math.max(0, Math.min(1, atom.confidence));
   const authority = tierAuthority.get(atom.tier) ?? 0;
   const status = statusScore[atom.status];
+  const qualityScore = qualityByAtom.get(atom.id);
+  const quality = qualityScore ? Math.max(0, Math.min(1, (qualityScore.score - qualityScore.conflictRisk * 0.25 + qualityScore.reviewerTrust * 0.1) / 100)) : 0.72;
   const factors: RetrievalFactors = {
     lexical,
     vector,
@@ -183,13 +195,14 @@ function scoreAtom(atom: KnowledgeAtom, queryTokens: string[], expandedTokens: s
     tierAuthority: authority,
     freshness,
     confidence,
-    status
+    status,
+    quality: Number(quality.toFixed(4))
   };
   const matched = hasQueryText ? queryTokens.length > 0 && (lexical > 0 || semantic >= 0.18 || metadata > 0) : true;
   const relevance = hasQueryText
     ? lexical * 0.34 + semantic * 0.18 + vector * 0.18 + metadata * 0.08 + graph * 0.04
     : 0.35;
-  const governance = authority * 0.16 + freshness * 0.1 + confidence * 0.08 + status * 0.04;
+  const governance = authority * 0.14 + freshness * 0.08 + confidence * 0.07 + status * 0.03 + factors.quality * 0.18;
   const score = matched ? Number((relevance + governance).toFixed(4)) : 0;
 
   return { atom, score, factors, matched };
@@ -216,10 +229,11 @@ export function rankHybridAtoms(input: RankInput): HybridRetrievalResult {
   const expandedTokens = expandQueryTokens(queryTokens);
   const queryVector = vectorize(expandedTokens);
   const edges = input.edges ?? [];
+  const qualityByAtom = new Map((input.qualityScores ?? []).filter((score) => score.subjectType === "atom").map((score) => [score.subjectId, score]));
   const limit = input.limit ?? 5;
   const scopedAtoms = input.atoms.filter((atom) => (input.requestedTier ? atom.tier === input.requestedTier : true));
   const scored = scopedAtoms
-    .map((atom) => scoreAtom(atom, queryTokens, expandedTokens, queryVector, edges, hasQueryText))
+    .map((atom) => scoreAtom(atom, queryTokens, expandedTokens, queryVector, edges, qualityByAtom, hasQueryText))
     .filter((candidate) => candidate.matched)
     .sort((left, right) => {
       if (right.score !== left.score) {

@@ -135,6 +135,7 @@ export function createSeedRepository(): BrainRepository {
         principal,
         atoms,
         edges,
+        qualityScores,
         requestedTier,
         limit: query.trim() ? 5 : 3
       });
