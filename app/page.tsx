@@ -25,6 +25,7 @@ import { composioIngestionPipeline, type ComposioIngestionState } from "@/lib/co
 import { BrainWorkbench } from "@/app/brain-workbench";
 import { GoogleConnectorConsole } from "@/app/google-connector-console";
 import { SlackConnectorConsole } from "@/app/slack-connector-console";
+import { WorkConnectorConsole } from "@/app/work-connector-console";
 import type { BrainTier, Changeset, CronRun, DashboardSnapshot, RegistryItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -609,6 +610,12 @@ export default async function Home() {
           principalId={snapshot.principal.id}
           accounts={composio.connectedAccounts}
           artifacts={ingestion.artifacts.filter((artifact) => artifact.connector === "google-drive" || artifact.connector === "gmail")}
+        />
+
+        <WorkConnectorConsole
+          principalId={snapshot.principal.id}
+          accounts={composio.connectedAccounts}
+          artifacts={ingestion.artifacts.filter((artifact) => artifact.connector === "github" || artifact.connector === "linear")}
         />
 
         <section className="layoutGrid" id="scheduler">

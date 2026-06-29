@@ -1,0 +1,14 @@
+{
+  "identifier": "AGE-72",
+  "title": "Composio-backed GitHub and Linear ingestion",
+  "url": "https://linear.app/agentiwise/issue/AGE-72/composio-backed-github-and-linear-ingestion",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/work-composio-ingestion.test.ts",
+    "npm run typecheck",
+    "npm test",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-29T14:10:00.000Z"
+}
