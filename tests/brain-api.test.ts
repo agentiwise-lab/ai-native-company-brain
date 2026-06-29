@@ -31,6 +31,21 @@ describe("brain API", () => {
       confidence: expect.any(Number),
       status: "approved"
     });
+    expect(payload.retrieval).toMatchObject({
+      explanation: expect.stringMatching(/lexical|vector|tier authority/i),
+      rankings: expect.arrayContaining([
+        expect.objectContaining({
+          atomId: payload.citations[0].id,
+          factors: expect.objectContaining({
+            lexical: expect.any(Number),
+            vector: expect.any(Number),
+            tierAuthority: expect.any(Number),
+            freshness: expect.any(Number),
+            confidence: expect.any(Number)
+          })
+        })
+      ])
+    });
   });
 
   it("returns an empty result for a no-match query", async () => {
@@ -45,6 +60,7 @@ describe("brain API", () => {
     expect(response.status).toBe(200);
     expect(payload.citations).toHaveLength(0);
     expect(payload.answer).toMatch(/no accessible memory/i);
+    expect(payload.retrieval.rankings).toHaveLength(0);
   });
 
   it("rejects forbidden or unknown principals", async () => {

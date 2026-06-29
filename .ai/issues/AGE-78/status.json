@@ -1,0 +1,15 @@
+{
+  "identifier": "AGE-78",
+  "title": "Hybrid retrieval with tier authority and freshness ranking",
+  "url": "https://linear.app/agentiwise/issue/AGE-78/hybrid-retrieval-with-tier-authority-and-freshness-ranking",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/hybrid-retrieval.test.ts",
+    "npm test -- tests/hybrid-retrieval.test.ts tests/brain-api.test.ts tests/acl-enforcement.test.ts tests/postgres-repository.test.ts",
+    "npm run typecheck",
+    "npm test",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-29T14:17:00.000Z"
+}

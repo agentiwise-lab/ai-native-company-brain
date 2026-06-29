@@ -273,6 +273,28 @@ export type BrainQueryResult = {
   citations: KnowledgeAtom[];
   events: BrainEvent[];
   retrievedRegistry: RegistryItem[];
+  retrieval: {
+    explanation: string;
+    rankings: Array<{
+      atomId: string;
+      score: number;
+      factors: {
+        lexical: number;
+        vector: number;
+        metadata: number;
+        graph: number;
+        tierAuthority: number;
+        freshness: number;
+        confidence: number;
+        status: number;
+      };
+    }>;
+    denied: Array<{
+      atomId: string;
+      reason: string;
+      score: number;
+    }>;
+  };
   policy: {
     allowed: boolean;
     reasons: string[];

@@ -9,7 +9,8 @@ import {
   qualityScores,
   registry
 } from "./seed";
-import { canDiscoverRegistryItem, canReadAtom, canReviewChangeset, enforceChangesetMerge } from "./policy";
+import { rankHybridAtoms } from "./hybrid-retrieval";
+import { canDiscoverRegistryItem, canReviewChangeset, enforceChangesetMerge } from "./policy";
 import type {
   BrainEvent,
   BrainQueryResult,
@@ -129,20 +130,15 @@ export function createSeedRepository(): BrainRepository {
 
     async queryBrain(query: string, principalId?: string, requestedTier?: BrainTier): Promise<BrainQueryResult> {
       const principal = getDemoPrincipal(principalId);
-      const candidateAtoms = atoms
-        .filter((atom) => (requestedTier ? atom.tier === requestedTier : true))
-        .filter((atom) => {
-          if (!query.trim()) {
-            return true;
-          }
-          return includesText(atom.title, query) || includesText(atom.body, query) || atom.tags.some((tag) => includesText(tag, query));
-        });
-      const evaluated = candidateAtoms.map((atom) => ({ atom, policy: canReadAtom(principal, atom) }));
-      const readable = evaluated
-        .filter(({ policy }) => policy.allowed)
-        .map(({ atom }) => atom);
-
-      const citations = query.trim() ? readable : readable.slice(0, 3);
+      const retrieval = rankHybridAtoms({
+        query,
+        principal,
+        atoms,
+        edges,
+        requestedTier,
+        limit: query.trim() ? 5 : 3
+      });
+      const citations = retrieval.citations;
       const retrievedRegistry = registry.filter((item) => canDiscoverRegistryItem(principal, item).allowed).slice(0, 4);
       const event: BrainEvent = {
         id: seedId("evt_query"),
@@ -155,13 +151,14 @@ export function createSeedRepository(): BrainRepository {
         metadata: {
           query,
           requestedTier,
-          citations: citations.map((atom) => atom.id)
+          citations: citations.map((atom) => atom.id),
+          rankings: retrieval.rankings,
+          denied: retrieval.denied.map((candidate) => candidate.atom.id)
         },
         createdAt: new Date().toISOString()
       };
-      const denyEvents: BrainEvent[] = evaluated
-        .filter(({ policy }) => !policy.allowed)
-        .map(({ atom, policy }) => ({
+      const denyEvents: BrainEvent[] = retrieval.denied
+        .map(({ atom, policy, score, factors }) => ({
           id: seedId("evt_policy_deny"),
           tenantId: atom.tenantId,
           actorId: principal.id,
@@ -172,23 +169,33 @@ export function createSeedRepository(): BrainRepository {
           metadata: {
             query,
             requestedTier,
-            reason: policy.reason
+            reason: policy.reason,
+            score,
+            factors
           },
           createdAt: new Date().toISOString()
         }));
       events.unshift(event, ...denyEvents);
 
       return {
-        answer:
-          citations.length === 0
-            ? "No accessible memory matched this query. Open a changeset to add source-backed knowledge before promoting it."
-            : `Found ${citations.length} governed memories. Highest authority match: ${citations[0].title}.`,
+        answer: citations.length === 0
+          ? `${retrieval.explanation} Open a changeset to add source-backed knowledge before promoting it.`
+          : `${retrieval.explanation} Highest authority match: ${citations[0].title}.`,
         citations,
         retrievedRegistry,
         events: [event, ...denyEvents],
+        retrieval: {
+          explanation: retrieval.explanation,
+          rankings: retrieval.rankings,
+          denied: retrieval.denied.map((candidate) => ({
+            atomId: candidate.atom.id,
+            reason: candidate.policy.reason,
+            score: candidate.score
+          }))
+        },
         policy: {
           allowed: true,
-          reasons: ["Query results were filtered by tier, role, team, and sensitivity ACLs."]
+          reasons: ["Query results were ranked by lexical, vector, graph, freshness, confidence, and tier authority, then filtered by ACL."]
         }
       };
     },

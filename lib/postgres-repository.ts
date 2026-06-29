@@ -1,5 +1,6 @@
 import { Pool, type PoolClient } from "pg";
-import { canDiscoverRegistryItem, canReadAtom, canReviewChangeset, enforceChangesetMerge } from "./policy";
+import { rankHybridAtoms } from "./hybrid-retrieval";
+import { canDiscoverRegistryItem, canReviewChangeset, enforceChangesetMerge } from "./policy";
 import type {
   BrainEvent,
   BrainQueryResult,
@@ -545,19 +546,21 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
          ORDER BY updated_at DESC`,
         [tenantId]
       );
-      const candidateAtoms = atomResult.rows
-        .map(toAtom)
-        .filter((atom) => {
-          if (!query.trim()) {
-            return true;
-          }
-          return includesText(atom.title, query) || includesText(atom.body, query) || atom.tags.some((tag) => includesText(tag, query));
-        });
-      const evaluated = candidateAtoms.map((atom) => ({ atom, policy: canReadAtom(principal, atom) }));
-      const readable = evaluated
-        .filter(({ policy }) => policy.allowed)
-        .map(({ atom }) => atom);
-      const citations = query.trim() ? readable : readable.slice(0, 3);
+      const edgeResult = await client.query<Row>(
+        `SELECT *
+         FROM dependency_edges
+         WHERE tenant_id = $1`,
+        [tenantId]
+      );
+      const retrieval = rankHybridAtoms({
+        query,
+        principal,
+        atoms: atomResult.rows.map(toAtom),
+        edges: edgeResult.rows.map(toEdge),
+        requestedTier,
+        limit: query.trim() ? 5 : 3
+      });
+      const citations = retrieval.citations;
       const retrievedRegistry = registryResult.rows
         .map(toRegistryItem)
         .filter((item) => canDiscoverRegistryItem(principal, item).allowed)
@@ -572,16 +575,17 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
           metadata: {
             query,
             requestedTier,
-            citations: citations.map((atom) => atom.id)
+            citations: citations.map((atom) => atom.id),
+            rankings: retrieval.rankings,
+            denied: retrieval.denied.map((candidate) => candidate.atom.id)
           }
         },
         tenantId,
         now(),
         id
       );
-      const denyEvents: BrainEvent[] = evaluated
-        .filter(({ policy }) => !policy.allowed)
-        .map(({ atom, policy }) =>
+      const denyEvents: BrainEvent[] = retrieval.denied
+        .map(({ atom, policy, score, factors }) =>
           createEvent(
             {
               actorId: principal.id,
@@ -592,7 +596,9 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
               metadata: {
                 query,
                 requestedTier,
-                reason: policy.reason
+                reason: policy.reason,
+                score,
+                factors
               }
             },
             tenantId,
@@ -606,16 +612,24 @@ export function createPostgresRepository(options: PostgresRepositoryOptions = {}
       }
 
       return {
-        answer:
-          citations.length === 0
-            ? "No accessible memory matched this query. Open a changeset to add source-backed knowledge before promoting it."
-            : `Found ${citations.length} governed memories. Highest authority match: ${citations[0].title}.`,
+        answer: citations.length === 0
+          ? `${retrieval.explanation} Open a changeset to add source-backed knowledge before promoting it.`
+          : `${retrieval.explanation} Highest authority match: ${citations[0].title}.`,
         citations,
         retrievedRegistry,
         events: [event, ...denyEvents],
+        retrieval: {
+          explanation: retrieval.explanation,
+          rankings: retrieval.rankings,
+          denied: retrieval.denied.map((candidate) => ({
+            atomId: candidate.atom.id,
+            reason: candidate.policy.reason,
+            score: candidate.score
+          }))
+        },
         policy: {
           allowed: true,
-          reasons: ["Query results were filtered by tier, role, team, and sensitivity ACLs."]
+          reasons: ["Query results were ranked by lexical, vector, graph, freshness, confidence, and tier authority, then filtered by ACL."]
         }
       };
     },

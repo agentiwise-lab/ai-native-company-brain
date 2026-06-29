@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createPostgresRepository, type SqlClient } from "../lib/postgres-repository";
-import type { BrainEvent, Changeset, KnowledgeAtom, Principal, RegistryItem } from "../lib/types";
+import type { BrainEvent, Changeset, DependencyEdge, KnowledgeAtom, Principal, RegistryItem } from "../lib/types";
 
 type QueryCall = {
   sql: string;
@@ -13,6 +13,7 @@ class FakeSqlClient implements SqlClient {
   atoms: KnowledgeAtom[] = [];
   changesets: Changeset[] = [];
   events: BrainEvent[] = [];
+  edges: DependencyEdge[] = [];
   principals: Principal[] = [
     {
       id: "usr_admin",
@@ -48,6 +49,10 @@ class FakeSqlClient implements SqlClient {
 
     if (normalized.includes("from changesets")) {
       return { rows: this.changesets as T[] };
+    }
+
+    if (normalized.includes("from dependency_edges")) {
+      return { rows: this.edges as T[] };
     }
 
     if (normalized.includes("from brain_events")) {
