@@ -2,9 +2,6 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
-      - "linear/**"
   pull_request:
 
 jobs:
@@ -25,4 +22,3 @@ jobs:
 
       - name: Verify
         run: npm run ci
-
