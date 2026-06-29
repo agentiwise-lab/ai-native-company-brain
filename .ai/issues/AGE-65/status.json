@@ -1,0 +1,14 @@
+{
+  "identifier": "AGE-65",
+  "title": "Add Composio config, sessions, connected accounts, and toolkit discovery",
+  "url": "https://linear.app/agentiwise/issue/AGE-65/add-composio-config-sessions-connected-accounts-and-toolkit-discovery",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/composio-control-plane.test.ts",
+    "npm run typecheck",
+    "npm test",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-29T13:18:00.000Z"
+}

@@ -20,6 +20,7 @@ import { generateAllAdapters } from "@/lib/adapters";
 import { summarizeQuality } from "@/lib/quality";
 import { getSetupState } from "@/lib/setup";
 import { bootstrapTenantFromForm } from "@/app/setup/actions";
+import { composioControlPlane, type ComposioState } from "@/lib/composio-control-plane";
 import type { BrainTier, Changeset, CronRun, DashboardSnapshot, RegistryItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -34,13 +35,13 @@ const tierLabels: Record<BrainTier, string> = {
 };
 
 function statusClass(status: string) {
-  if (["published", "approved", "passed", "succeeded", "merged"].includes(status)) {
+  if (["published", "approved", "passed", "succeeded", "merged", "active", "configured"].includes(status)) {
     return "status statusGood";
   }
-  if (["review", "warning", "needs-approval", "checks-running"].includes(status)) {
+  if (["review", "warning", "needs-approval", "checks-running", "pending"].includes(status)) {
     return "status statusWarn";
   }
-  if (["blocked", "failed", "rejected"].includes(status)) {
+  if (["blocked", "failed", "rejected", "revoked", "errored"].includes(status)) {
     return "status statusBad";
   }
   return "status";
@@ -243,6 +244,68 @@ function CompatibilityPanel({ items }: { items: RegistryItem[] }) {
   );
 }
 
+function ComposioPanel({ state }: { state: ComposioState }) {
+  const configStatus = state.config?.apiKeyConfigured ? "configured" : "not configured";
+  const accounts = state.connectedAccounts.slice(0, 4);
+  const candidates = state.registryCandidates.slice(0, 4);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Connections</p>
+          <h2>Composio control plane</h2>
+        </div>
+        <span className={statusClass(configStatus)}>{configStatus}</span>
+      </div>
+
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Project</span>
+          <strong>{state.config?.projectId ?? "unconfigured"}</strong>
+          <small>{state.config?.baseUrl ?? "https://backend.composio.dev"}</small>
+        </div>
+        <div className="connectionItem">
+          <span>Accounts</span>
+          <strong>{state.connectedAccounts.length}</strong>
+          <small>{state.connectedAccounts.filter((account) => account.status === "active").length} active</small>
+        </div>
+        <div className="connectionItem">
+          <span>Sessions</span>
+          <strong>{state.sessions.length}</strong>
+          <small>{state.sessions.filter((session) => session.status === "active").length} reusable</small>
+        </div>
+        <div className="connectionItem">
+          <span>Tool candidates</span>
+          <strong>{state.registryCandidates.length}</strong>
+          <small>staged for review</small>
+        </div>
+      </div>
+
+      <div className="connectionList">
+        {accounts.map((account) => (
+          <div className="connectionRow" key={account.id}>
+            <div>
+              <strong>{account.toolkitSlug}</strong>
+              <span>{account.principalId}</span>
+            </div>
+            <span className={statusClass(account.status)}>{account.status}</span>
+          </div>
+        ))}
+        {candidates.map((candidate) => (
+          <div className="connectionRow" key={candidate.id}>
+            <div>
+              <strong>{candidate.name}</strong>
+              <span>{candidate.slug}</span>
+            </div>
+            <span className={statusClass(candidate.status)}>{candidate.status}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function AuditPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
   return (
     <section className="panel auditPanel">
@@ -342,7 +405,7 @@ export default async function Home() {
     return <SetupView />;
   }
 
-  const snapshot = await repository.dashboard();
+  const [snapshot, composio] = await Promise.all([repository.dashboard(), composioControlPlane.getState()]);
   const quality = summarizeQuality(snapshot.qualityScores);
   const openChangesets = snapshot.changesets.filter((changeset) => !["merged", "rolled-back"].includes(changeset.status));
   const publishedCapabilities = snapshot.registry.filter((item) => item.status === "published").length;
@@ -371,6 +434,10 @@ export default async function Home() {
           <a href="#registry">
             <Plug size={16} />
             Registry
+          </a>
+          <a href="#connections">
+            <Plug size={16} />
+            Connections
           </a>
           <a href="#scheduler">
             <CalendarClock size={16} />
@@ -448,6 +515,10 @@ export default async function Home() {
 
         <section id="registry">
           <RegistryMatrix items={snapshot.registry} />
+        </section>
+
+        <section id="connections">
+          <ComposioPanel state={composio} />
         </section>
 
         <section className="layoutGrid" id="scheduler">

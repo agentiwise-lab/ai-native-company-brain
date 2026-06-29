@@ -46,6 +46,21 @@ npm run db:seed
 - `lib/adapters.ts`: Codex, Claude Code, OpenCode, and generic agent adapter generation
 - `app/page.tsx`: operator console UI
 
+## Composio Control Plane
+
+Configure `COMPOSIO_API_KEY`, `COMPOSIO_PROJECT_ID`, and `COMPOSIO_BASE_URL` for live Composio calls. The app persists Composio control-plane state in `data/composio-state.json` by default and never writes raw API keys to disk.
+
+Key API paths:
+
+- `GET|POST /api/v1/composio/config`
+- `GET|POST /api/v1/composio/accounts`
+- `POST /api/v1/composio/accounts/{id}/test`
+- `POST /api/v1/composio/accounts/{id}/refresh`
+- `POST /api/v1/composio/accounts/{id}/revoke`
+- `POST /api/v1/composio/accounts/{id}/reauthorize`
+- `GET|POST /api/v1/composio/sessions`
+- `GET|POST /api/v1/composio/toolkits/discover`
+
 ## Current Status
 
 This is a runnable v0 scaffold with a repository boundary. Seed mode keeps local demos instant, while `DATABASE_URL` switches the UI, API, MCP endpoint, registry, cron runs, changesets, atoms, artifacts, and audit events to Postgres.

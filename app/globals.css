@@ -450,6 +450,7 @@ h2 {
 .changesetList,
 .registryGrid,
 .cronShell,
+.connectionList,
 .auditList {
   display: grid;
   gap: 12px;
@@ -646,6 +647,56 @@ h2 {
   white-space: nowrap;
 }
 
+.connectionGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.connectionItem,
+.connectionRow {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.connectionItem {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+.connectionItem span,
+.connectionItem small,
+.connectionRow span {
+  color: var(--muted);
+}
+
+.connectionItem span {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.connectionItem strong {
+  overflow-wrap: anywhere;
+  font-size: 1.1rem;
+}
+
+.connectionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+}
+
+.connectionRow strong,
+.connectionRow span {
+  display: block;
+}
+
 .auditRow {
   display: grid;
   grid-template-columns: 58px 150px minmax(0, 1fr) auto;
@@ -683,7 +734,7 @@ h2 {
   }
 
   .sideNav nav {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .sideFooter {
@@ -697,6 +748,7 @@ h2 {
   }
 
   .metricsGrid,
+  .connectionGrid,
   .registryGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -722,6 +774,7 @@ h2 {
 
   .sideNav nav,
   .metricsGrid,
+  .connectionGrid,
   .registryGrid,
   .adapterGrid,
   .architectureMap {
