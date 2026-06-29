@@ -23,6 +23,7 @@ import { bootstrapTenantFromForm } from "@/app/setup/actions";
 import { composioControlPlane, type ComposioState } from "@/lib/composio-control-plane";
 import { composioIngestionPipeline, type ComposioIngestionState } from "@/lib/composio-ingestion";
 import { BrainWorkbench } from "@/app/brain-workbench";
+import { GoogleConnectorConsole } from "@/app/google-connector-console";
 import { SlackConnectorConsole } from "@/app/slack-connector-console";
 import type { BrainTier, Changeset, CronRun, DashboardSnapshot, RegistryItem } from "@/lib/types";
 
@@ -602,6 +603,12 @@ export default async function Home() {
           principalId={snapshot.principal.id}
           accounts={composio.connectedAccounts}
           artifacts={ingestion.artifacts.filter((artifact) => artifact.connector === "slack")}
+        />
+
+        <GoogleConnectorConsole
+          principalId={snapshot.principal.id}
+          accounts={composio.connectedAccounts}
+          artifacts={ingestion.artifacts.filter((artifact) => artifact.connector === "google-drive" || artifact.connector === "gmail")}
         />
 
         <section className="layoutGrid" id="scheduler">

@@ -1,0 +1,14 @@
+{
+  "identifier": "AGE-71",
+  "title": "Composio-backed Google Drive and Gmail ingestion",
+  "url": "https://linear.app/agentiwise/issue/AGE-71/composio-backed-google-drive-and-gmail-ingestion",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/google-composio-ingestion.test.ts",
+    "npm run typecheck",
+    "npm test",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-29T14:04:00.000Z"
+}
