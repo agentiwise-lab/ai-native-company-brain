@@ -22,6 +22,7 @@ import { agentExportService } from "@/lib/agent-exports";
 import { packageDistributionService } from "@/lib/package-distribution";
 import { durableScheduler } from "@/lib/durable-scheduler";
 import { cronOutputDelivery } from "@/lib/cron-output-delivery";
+import { brainHealthAgent } from "@/lib/brain-health-agent";
 import { artifactProcessingPipeline } from "@/lib/artifact-processing";
 import { candidateExtractionWorker } from "@/lib/candidate-extraction";
 import { memoryConflictWorkflow } from "@/lib/memory-conflicts";
@@ -1164,6 +1165,71 @@ async function MemoryQualityPanel() {
   );
 }
 
+async function BrainHealthAgentPanel() {
+  const state = await brainHealthAgent.getState();
+  const latestRun = state.runs[0];
+  const recommendations = state.recommendations.slice(0, 5);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Self-maintenance</p>
+          <h2>Brain health agent</h2>
+        </div>
+        <span className={statusClass(latestRun?.status ?? "pending")}>{latestRun?.status ?? "pending"}</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Job</span>
+          <strong>{state.job ? "enabled" : "off"}</strong>
+          <small>{state.job?.outputDestination ?? "not configured"}</small>
+        </div>
+        <div className="connectionItem">
+          <span>Runs</span>
+          <strong>{state.runs.length}</strong>
+          <small>{latestRun ? `${latestRun.changesetCount} changesets latest` : "waiting"}</small>
+        </div>
+        <div className="connectionItem">
+          <span>Recommendations</span>
+          <strong>{state.recommendations.length}</strong>
+          <small>actionable findings</small>
+        </div>
+        <div className="connectionItem">
+          <span>Approvals</span>
+          <strong>{state.approvals.filter((approval) => approval.status === "pending").length}</strong>
+          <small>paused runs</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {recommendations.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No brain health recommendations yet</strong>
+              <span>POST /api/v1/brain-health/enable, then /api/v1/brain-health/run.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {recommendations.map((recommendation) => (
+          <div className="connectionRow" key={recommendation.id}>
+            <div>
+              <strong>
+                {recommendation.action} · {recommendation.affectedAtomId}
+              </strong>
+              <span>{recommendation.reason}</span>
+              <small>
+                reviewer {recommendation.reviewerId} · {recommendation.policyContext}
+              </small>
+            </div>
+            <span className="status statusWarn">changeset</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function AuditPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
   return (
     <section className="panel auditPanel">
@@ -1402,6 +1468,8 @@ export default async function Home() {
         <MemoryConflictPanel />
 
         <MemoryQualityPanel />
+
+        <BrainHealthAgentPanel />
 
         <SlackConnectorConsole
           tenantId={tenantId}

@@ -1,0 +1,21 @@
+{
+  "identifier": "AGE-88",
+  "title": "Weekly brain health agent opens concrete changesets",
+  "url": "https://linear.app/agentiwise/issue/AGE-88/weekly-brain-health-agent-opens-concrete-changesets",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/brain-health-agent.test.ts",
+    "npm run ci"
+  ],
+  "implementation": {
+    "service": "lib/brain-health-agent.ts",
+    "routes": [
+      "app/api/v1/brain-health/enable/route.ts",
+      "app/api/v1/brain-health/run/route.ts",
+      "app/api/v1/brain-health/status/route.ts"
+    ],
+    "ui": "app/page.tsx"
+  },
+  "updatedAt": "2026-06-29T21:22:00.000+05:30"
+}
