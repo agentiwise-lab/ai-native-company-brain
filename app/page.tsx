@@ -13,6 +13,7 @@ import {
   Search,
   ShieldCheck,
   Sparkles,
+  Wrench,
   Waypoints
 } from "lucide-react";
 import { repository } from "@/lib/repository";
@@ -24,6 +25,7 @@ import { memoryQualityLoop } from "@/lib/memory-quality-loop";
 import { summarizeQuality } from "@/lib/quality";
 import { registryImportService } from "@/lib/registry-import";
 import { registryPublicationPipeline } from "@/lib/registry-publication";
+import { toolInvocationGateway } from "@/lib/tool-invocation-gateway";
 import { getSetupState } from "@/lib/setup";
 import { bootstrapTenantFromForm } from "@/app/setup/actions";
 import { composioControlPlane, type ComposioState } from "@/lib/composio-control-plane";
@@ -54,7 +56,7 @@ function statusClass(status: string) {
   if (["review", "warning", "needs-approval", "checks-running", "pending"].includes(status)) {
     return "status statusWarn";
   }
-  if (["blocked", "failed", "rejected", "revoked", "errored"].includes(status)) {
+  if (["blocked", "denied", "failed", "rejected", "revoked", "errored"].includes(status)) {
     return "status statusBad";
   }
   return "status";
@@ -278,6 +280,69 @@ async function RegistryPublicationPanel() {
               </span>
             </div>
             <span className={statusClass(check.status)}>{check.status}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+async function ToolInvocationPanel() {
+  const state = await toolInvocationGateway.getState();
+  const records = state.records.slice(0, 5);
+  const deniedOrApproval = state.records.filter((record) => ["denied", "needs-approval"].includes(record.status));
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Execution gateway</p>
+          <h2>Tool invocations</h2>
+        </div>
+        <Wrench size={20} />
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Invocations</span>
+          <strong>{state.records.length}</strong>
+          <small>policy checked</small>
+        </div>
+        <div className="connectionItem">
+          <span>Succeeded</span>
+          <strong>{state.records.filter((record) => record.status === "succeeded").length}</strong>
+          <small>Composio executed</small>
+        </div>
+        <div className="connectionItem">
+          <span>Gated</span>
+          <strong>{deniedOrApproval.length}</strong>
+          <small>denied or needs approval</small>
+        </div>
+        <div className="connectionItem">
+          <span>Audit</span>
+          <strong>{state.auditEvents.length}</strong>
+          <small>tool.invoke events</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {records.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No tool invocations yet</strong>
+              <span>POST /api/v1/tools/invoke to execute an approved registry tool through policy.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {records.map((record) => (
+          <div className="connectionRow" key={record.id}>
+            <div>
+              <strong>{record.toolSlug}</strong>
+              <span>
+                {record.principalId} · {record.connectedAccountId} · v{record.packageVersion}
+              </span>
+              <small>{record.decision.reasons[0] ?? "Recorded by tool invocation gateway."}</small>
+            </div>
+            <span className={statusClass(record.status)}>{record.status}</span>
           </div>
         ))}
       </div>
@@ -1026,6 +1091,8 @@ export default async function Home() {
         <RegistryImportPanel />
 
         <RegistryPublicationPanel />
+
+        <ToolInvocationPanel />
 
         <section className="layoutGrid" id="connections">
           <ComposioPanel state={composio} />

@@ -1,0 +1,21 @@
+{
+  "identifier": "AGE-83",
+  "title": "Invoke tools through internal policy plus Composio execution",
+  "url": "https://linear.app/agentiwise/issue/AGE-83/invoke-tools-through-internal-policy-plus-composio-execution",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/tool-invocation-gateway.test.ts",
+    "npm test",
+    "npm run build"
+  ],
+  "implementation": {
+    "service": "lib/tool-invocation-gateway.ts",
+    "routes": [
+      "app/api/v1/tools/invoke/route.ts",
+      "app/api/v1/tools/invocations/route.ts"
+    ],
+    "ui": "app/page.tsx"
+  },
+  "updatedAt": "2026-06-29T20:46:00.000+05:30"
+}
