@@ -1,0 +1,22 @@
+{
+  "identifier": "AGE-85",
+  "title": "Package install/download flow with rollback",
+  "url": "https://linear.app/agentiwise/issue/AGE-85/package-installdownload-flow-with-rollback",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/package-distribution.test.ts",
+    "npm test",
+    "npm run build"
+  ],
+  "implementation": {
+    "service": "lib/package-distribution.ts",
+    "routes": [
+      "app/api/v1/registry/distribution/route.ts",
+      "app/api/v1/registry/distribution/install/route.ts",
+      "app/api/v1/registry/distribution/rollback/route.ts"
+    ],
+    "ui": "app/page.tsx"
+  },
+  "updatedAt": "2026-06-29T20:59:00.000+05:30"
+}

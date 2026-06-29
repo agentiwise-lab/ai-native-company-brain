@@ -19,6 +19,7 @@ import {
 import { repository } from "@/lib/repository";
 import { generateAllAdapters } from "@/lib/adapters";
 import { agentExportService } from "@/lib/agent-exports";
+import { packageDistributionService } from "@/lib/package-distribution";
 import { artifactProcessingPipeline } from "@/lib/artifact-processing";
 import { candidateExtractionWorker } from "@/lib/candidate-extraction";
 import { memoryConflictWorkflow } from "@/lib/memory-conflicts";
@@ -37,7 +38,7 @@ import { FlexibleConnectorConsole } from "@/app/flexible-connector-console";
 import { GoogleConnectorConsole } from "@/app/google-connector-console";
 import { SlackConnectorConsole } from "@/app/slack-connector-console";
 import { WorkConnectorConsole } from "@/app/work-connector-console";
-import type { BrainTier, Changeset, CronRun, DashboardSnapshot, RegistryItem } from "@/lib/types";
+import type { BrainTier, Changeset, CronRun, DashboardSnapshot, Principal, RegistryItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -499,6 +500,86 @@ async function CompatibilityPanel({ items }: { items: RegistryItem[] }) {
               <span>{failure.errors.join(" ")}</span>
             </div>
             <span className="status statusBad">blocked</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+async function PackageDistributionPanel({ principal }: { principal: Principal }) {
+  const [catalog, state] = await Promise.all([
+    packageDistributionService.listCatalog({ principal }),
+    packageDistributionService.getState()
+  ]);
+  const packages = catalog.packages.slice(0, 5);
+  const rollbacks = state.rollbacks.slice(0, 3);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Package distribution</p>
+          <h2>Install and rollback</h2>
+        </div>
+        <span className="status">{state.pins.length} pins</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Published</span>
+          <strong>{catalog.packages.length}</strong>
+          <small>visible packages</small>
+        </div>
+        <div className="connectionItem">
+          <span>Pins</span>
+          <strong>{state.pins.length}</strong>
+          <small>agent installs</small>
+        </div>
+        <div className="connectionItem">
+          <span>Rollbacks</span>
+          <strong>{state.rollbacks.length}</strong>
+          <small>audited changes</small>
+        </div>
+        <div className="connectionItem">
+          <span>Impacted</span>
+          <strong>{state.rollbacks.reduce((sum, rollback) => sum + rollback.dependentPackages.length, 0)}</strong>
+          <small>dependent packages</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {packages.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No installable packages visible</strong>
+              <span>Published packages appear here when registry policy allows this principal to install them.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {packages.map((item) => (
+          <div className="connectionRow" key={`${item.packageId}:${item.version}`}>
+            <div>
+              <strong>
+                {item.slug} · v{item.version}
+              </strong>
+              <span>
+                quality {item.qualityScore}% · {item.compatibleAgents.join(", ")}
+              </span>
+              <small>{item.installOptions[0]?.installSnippet}</small>
+            </div>
+            <span className={statusClass(item.status)}>{item.status}</span>
+          </div>
+        ))}
+        {rollbacks.map((rollback) => (
+          <div className="connectionRow" key={rollback.id}>
+            <div>
+              <strong>{rollback.slug}</strong>
+              <span>
+                {rollback.fromVersion} {"->"} {rollback.targetVersion} · {rollback.dependentPackages.length} dependents
+              </span>
+              <small>{rollback.changeset.summary}</small>
+            </div>
+            <span className="status statusWarn">rollback</span>
           </div>
         ))}
       </div>
@@ -1198,6 +1279,8 @@ export default async function Home() {
           <CronConsole runs={snapshot.cronRuns} items={snapshot.registry} />
           <CompatibilityPanel items={snapshot.registry} />
         </section>
+
+        <PackageDistributionPanel principal={snapshot.principal} />
 
         <section id="audit">
           <AuditPanel snapshot={snapshot} />
