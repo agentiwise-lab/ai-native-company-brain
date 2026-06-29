@@ -1,0 +1,14 @@
+{
+  "identifier": "AGE-69",
+  "title": "Normalize Composio outputs into source artifacts",
+  "url": "https://linear.app/agentiwise/issue/AGE-69/normalize-composio-outputs-into-source-artifacts",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/composio-ingestion.test.ts",
+    "npm run typecheck",
+    "npm test",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-29T13:51:00.000Z"
+}

@@ -21,6 +21,7 @@ import { summarizeQuality } from "@/lib/quality";
 import { getSetupState } from "@/lib/setup";
 import { bootstrapTenantFromForm } from "@/app/setup/actions";
 import { composioControlPlane, type ComposioState } from "@/lib/composio-control-plane";
+import { composioIngestionPipeline, type ComposioIngestionState } from "@/lib/composio-ingestion";
 import { BrainWorkbench } from "@/app/brain-workbench";
 import type { BrainTier, Changeset, CronRun, DashboardSnapshot, RegistryItem } from "@/lib/types";
 
@@ -307,6 +308,71 @@ function ComposioPanel({ state }: { state: ComposioState }) {
   );
 }
 
+function IngestionPanel({ state }: { state: ComposioIngestionState }) {
+  const latestRun = state.runs[0];
+  const latestArtifacts = state.artifacts.slice(0, 4);
+  const latestCheckpoint = state.checkpoints[0];
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Source artifacts</p>
+          <h2>Composio ingestion</h2>
+        </div>
+        <span className={statusClass(latestRun?.status ?? "pending")}>{latestRun?.status ?? "pending"}</span>
+      </div>
+
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Artifacts</span>
+          <strong>{state.artifacts.length}</strong>
+          <small>raw and normalized</small>
+        </div>
+        <div className="connectionItem">
+          <span>Checkpoints</span>
+          <strong>{state.checkpoints.length}</strong>
+          <small>{latestCheckpoint?.id ?? "none"}</small>
+        </div>
+        <div className="connectionItem">
+          <span>Runs</span>
+          <strong>{state.runs.length}</strong>
+          <small>{latestRun?.message ?? "waiting for connector sync"}</small>
+        </div>
+        <div className="connectionItem">
+          <span>Audit events</span>
+          <strong>{state.auditEvents.length}</strong>
+          <small>ingest lineage</small>
+        </div>
+      </div>
+
+      <div className="connectionList">
+        {latestArtifacts.map((artifact) => (
+          <div className="connectionRow" key={artifact.id}>
+            <div>
+              <strong>{artifact.source.title}</strong>
+              <span>
+                {artifact.connector} · {artifact.sourceObjectId} · {artifact.rawObjectKey}
+              </span>
+              <small>{artifact.normalizedText}</small>
+            </div>
+            <span className={statusClass(artifact.acl.sensitivity)}>{artifact.acl.sensitivity}</span>
+          </div>
+        ))}
+        {latestArtifacts.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No artifacts synced yet</strong>
+              <span>POST /api/v1/ingestion/composio after a Composio action runs.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 function AuditPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
   return (
     <section className="panel auditPanel">
@@ -406,7 +472,11 @@ export default async function Home() {
     return <SetupView />;
   }
 
-  const [snapshot, composio] = await Promise.all([repository.dashboard(), composioControlPlane.getState()]);
+  const [snapshot, composio, ingestion] = await Promise.all([
+    repository.dashboard(),
+    composioControlPlane.getState(),
+    composioIngestionPipeline.getState()
+  ]);
   const tenantId = process.env.COMPANY_BRAIN_TENANT_ID ?? "tenant_demo";
   const quality = summarizeQuality(snapshot.qualityScores);
   const openChangesets = snapshot.changesets.filter((changeset) => !["merged", "rolled-back"].includes(changeset.status));
@@ -521,8 +591,9 @@ export default async function Home() {
           <RegistryMatrix items={snapshot.registry} />
         </section>
 
-        <section id="connections">
+        <section className="layoutGrid" id="connections">
           <ComposioPanel state={composio} />
+          <IngestionPanel state={ingestion} />
         </section>
 
         <section className="layoutGrid" id="scheduler">
