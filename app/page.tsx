@@ -18,7 +18,11 @@ import {
 import { repository } from "@/lib/repository";
 import { generateAllAdapters } from "@/lib/adapters";
 import { summarizeQuality } from "@/lib/quality";
+import { getSetupState } from "@/lib/setup";
+import { bootstrapTenantFromForm } from "@/app/setup/actions";
 import type { BrainTier, Changeset, CronRun, DashboardSnapshot, RegistryItem } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
 
 const tierLabels: Record<BrainTier, string> = {
   individual: "Individual",
@@ -288,7 +292,56 @@ function ArchitectureMap() {
   );
 }
 
+function SetupView() {
+  return (
+    <main className="setupShell">
+      <section className="setupPanel">
+        <div className="setupIntro">
+          <div className="brandMark">
+            <Brain size={22} />
+          </div>
+          <p className="eyebrow">First run setup</p>
+          <h1>Bootstrap Company Brain</h1>
+        </div>
+
+        <form className="setupForm" action={bootstrapTenantFromForm}>
+          <label>
+            <span>Tenant name</span>
+            <input name="tenantName" required placeholder="Acme AI" />
+          </label>
+          <label>
+            <span>Admin name</span>
+            <input name="adminName" required placeholder="Admin User" />
+          </label>
+          <label>
+            <span>Admin email</span>
+            <input name="adminEmail" type="email" required placeholder="admin@example.com" />
+          </label>
+          <label>
+            <span>Tenant encryption key</span>
+            <input name="encryptionKey" type="password" required placeholder="Configured secret" />
+          </label>
+          <label>
+            <span>Composio project id</span>
+            <input name="composioProjectId" required placeholder="composio-project" />
+          </label>
+          <label className="setupCheck">
+            <input name="composioApiKeyConfigured" type="checkbox" />
+            <span>Composio API key is configured</span>
+          </label>
+          <button type="submit">Create tenant</button>
+        </form>
+      </section>
+    </main>
+  );
+}
+
 export default function Home() {
+  const setup = getSetupState();
+  if (!setup.isComplete) {
+    return <SetupView />;
+  }
+
   const snapshot = repository.dashboard();
   const quality = summarizeQuality(snapshot.qualityScores);
   const openChangesets = snapshot.changesets.filter((changeset) => !["merged", "rolled-back"].includes(changeset.status));
@@ -330,7 +383,7 @@ export default function Home() {
         </nav>
         <div className="sideFooter">
           <LockKeyhole size={16} />
-          <span>ACLs active · tenant demo</span>
+          <span>ACLs active · {setup.tenant?.name}</span>
         </div>
       </aside>
 

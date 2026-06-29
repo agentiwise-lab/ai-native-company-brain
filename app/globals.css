@@ -52,6 +52,92 @@ code {
   color: var(--green);
 }
 
+.setupShell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.setupPanel {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(320px, 1fr);
+  gap: 28px;
+  inline-size: min(980px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 28px;
+  box-shadow: var(--shadow);
+}
+
+.setupIntro {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.setupIntro h1 {
+  font-size: clamp(2.4rem, 6vw, 4.7rem);
+}
+
+.setupForm {
+  display: grid;
+  gap: 14px;
+}
+
+.setupForm label {
+  display: grid;
+  gap: 7px;
+}
+
+.setupForm label span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.setupForm input {
+  inline-size: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfb;
+  color: var(--ink);
+  padding: 11px 12px;
+}
+
+.setupForm input:focus {
+  border-color: rgba(17, 107, 85, 0.7);
+  outline: 3px solid rgba(17, 107, 85, 0.12);
+}
+
+.setupCheck {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+}
+
+.setupCheck input {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.setupForm button {
+  border: 0;
+  border-radius: 8px;
+  background: var(--green);
+  color: white;
+  cursor: pointer;
+  font-weight: 800;
+  padding: 12px 14px;
+}
+
+.setupForm button:hover,
+.setupForm button:focus-visible {
+  background: var(--green-2);
+  outline: none;
+}
+
 .appShell {
   display: grid;
   grid-template-columns: 252px minmax(0, 1fr);
@@ -617,6 +703,15 @@ h2 {
 }
 
 @media (max-width: 720px) {
+  .setupShell {
+    padding: 14px;
+  }
+
+  .setupPanel {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+
   .mainContent {
     padding: 16px;
   }
