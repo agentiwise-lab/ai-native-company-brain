@@ -20,6 +20,7 @@ import { repository } from "@/lib/repository";
 import { generateAllAdapters } from "@/lib/adapters";
 import { agentExportService } from "@/lib/agent-exports";
 import { packageDistributionService } from "@/lib/package-distribution";
+import { marketplaceService } from "@/lib/marketplace";
 import { durableScheduler } from "@/lib/durable-scheduler";
 import { cronOutputDelivery } from "@/lib/cron-output-delivery";
 import { brainHealthAgent } from "@/lib/brain-health-agent";
@@ -64,13 +65,30 @@ const tierLabels: Record<BrainTier, string> = {
 };
 
 function statusClass(status: string) {
-  if (["published", "approved", "passed", "succeeded", "delivered", "suppressed", "merged", "active", "configured", "completed", "rotated", "planned"].includes(status)) {
+  if (
+    [
+      "published",
+      "approved",
+      "passed",
+      "valid",
+      "approved-for-install",
+      "succeeded",
+      "delivered",
+      "suppressed",
+      "merged",
+      "active",
+      "configured",
+      "completed",
+      "rotated",
+      "planned"
+    ].includes(status)
+  ) {
     return "status statusGood";
   }
   if (["review", "warning", "needs-approval", "checks-running", "pending", "queued", "running", "retried", "recovery-ready"].includes(status)) {
     return "status statusWarn";
   }
-  if (["blocked", "canceled", "denied", "failed", "rejected", "revoked", "errored", "rolled-back"].includes(status)) {
+  if (["blocked", "canceled", "denied", "failed", "rejected", "revoked", "errored", "rolled-back", "invalid"].includes(status)) {
     return "status statusBad";
   }
   return "status";
@@ -743,6 +761,80 @@ async function PackageDistributionPanel({ principal }: { principal: Principal })
               <small>{rollback.changeset.summary}</small>
             </div>
             <span className="status statusWarn">rollback</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+async function MarketplacePanel({ principal }: { principal: Principal }) {
+  const [catalog, state] = await Promise.all([
+    marketplaceService.listMarketplace({ principal }),
+    marketplaceService.getState()
+  ]);
+  const packages = catalog.packages.slice(0, 5);
+  const reviews = state.reviews.slice(0, 2);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Private and public marketplace</p>
+          <h2>Governed installs</h2>
+        </div>
+        <span className="status">{state.installs.length} local changesets</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Packages</span>
+          <strong>{catalog.packages.length}</strong>
+          <small>{catalog.packages.filter((item) => item.source === "public").length} public</small>
+        </div>
+        <div className="connectionItem">
+          <span>Reviews</span>
+          <strong>{state.reviews.length}</strong>
+          <small>trust evidence captured</small>
+        </div>
+        <div className="connectionItem">
+          <span>Installs</span>
+          <strong>{state.installs.length}</strong>
+          <small>draft changesets</small>
+        </div>
+        <div className="connectionItem">
+          <span>Rollbacks</span>
+          <strong>{state.rollbacks.length}</strong>
+          <small>audited reversions</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {packages.map((item) => (
+          <div className="connectionRow" key={`${item.source}:${item.packageId}:${item.version}`}>
+            <div>
+              <strong>
+                {item.slug} · {item.source}
+              </strong>
+              <span>
+                v{item.version} · {item.compatibleAgents.join(", ")} · {Math.round(item.evalResults.passRate * 100)}% evals
+              </span>
+              <small>
+                {item.trust.signatureStatus} signature · {item.permissionSummary.join(", ") || "no permissions"} ·{" "}
+                {item.trust.provenance.sourceUrl}
+              </small>
+            </div>
+            <span className={statusClass(item.securityStatus)}>{item.securityStatus}</span>
+          </div>
+        ))}
+        {reviews.map((review) => (
+          <div className="connectionRow" key={review.id}>
+            <div>
+              <strong>{review.packageSlug}</strong>
+              <span>
+                {review.decision} · signature {review.evidence.signatureStatus}
+              </span>
+              <small>{review.evidence.provenance.sourceUrl}</small>
+            </div>
+            <span className={statusClass(review.decision)}>{review.decision}</span>
           </div>
         ))}
       </div>
@@ -2239,8 +2331,10 @@ export default async function Home() {
 
         <section className="layoutGrid">
           <CompatibilityPanel items={snapshot.registry} />
-          <PackageDistributionPanel principal={snapshot.principal} />
+          <MarketplacePanel principal={snapshot.principal} />
         </section>
+
+        <PackageDistributionPanel principal={snapshot.principal} />
 
         <section id="audit">
           <AuditPanel snapshot={snapshot} />

@@ -286,7 +286,11 @@ export type BrainEvent = {
     | "managed-ops.plan.block"
     | "managed-ops.support.view"
     | "managed-ops.worker.recover"
-    | "managed-ops.upgrade.plan";
+    | "managed-ops.upgrade.plan"
+    | "marketplace.review"
+    | "marketplace.install.open"
+    | "marketplace.install.block"
+    | "marketplace.install.rollback";
   targetId: string;
   targetType:
     | "artifact"

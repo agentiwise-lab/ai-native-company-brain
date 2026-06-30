@@ -1,0 +1,15 @@
+{
+  "issue": "AGE-98",
+  "state": "in-progress",
+  "branch": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/marketplace.test.ts: passed, 7 tests",
+    "npm run ci: passed, 41 test files, 223 tests, Next build passed"
+  ],
+  "remoteVerification": [],
+  "notes": [
+    "AGE-85 and AGE-96 blockers are Done in Linear.",
+    "Marketplace service, API routes, dashboard panel, and audit actions implemented.",
+    "Install opens local draft changesets; unsafe packages write denial audit events without creating installs."
+  ]
+}
