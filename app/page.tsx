@@ -37,6 +37,7 @@ import { bootstrapTenantFromForm } from "@/app/setup/actions";
 import { composioControlPlane, type ComposioState } from "@/lib/composio-control-plane";
 import { composioIngestionPipeline, type ComposioIngestionState } from "@/lib/composio-ingestion";
 import { connectorOps } from "@/lib/connector-ops";
+import { connectorMaintenanceAssistant } from "@/lib/connector-maintenance";
 import { BrainWorkbench } from "@/app/brain-workbench";
 import { FlexibleConnectorConsole } from "@/app/flexible-connector-console";
 import { GoogleConnectorConsole } from "@/app/google-connector-console";
@@ -910,6 +911,84 @@ async function ConnectorOpsPanel() {
   );
 }
 
+async function ConnectorMaintenancePanel() {
+  const state = await connectorMaintenanceAssistant.getState();
+  const tasks = state.repairTasks.slice(0, 4);
+  const exports = state.offboardingExports.slice(0, 3);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Compliance assistants</p>
+          <h2>Triage & offboarding</h2>
+        </div>
+        <span className="status">{state.auditEvents.length} audited</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Triage</span>
+          <strong>{state.triageRuns.length}</strong>
+          <small>connector scans</small>
+        </div>
+        <div className="connectionItem">
+          <span>Repair</span>
+          <strong>{state.repairTasks.filter((task) => task.status === "open").length}</strong>
+          <small>open tasks</small>
+        </div>
+        <div className="connectionItem">
+          <span>Exports</span>
+          <strong>{state.offboardingExports.length}</strong>
+          <small>offboarding packs</small>
+        </div>
+        <div className="connectionItem">
+          <span>Revoked</span>
+          <strong>{state.offboardingExports.reduce((count, item) => count + item.revokedAccountIds.length, 0)}</strong>
+          <small>connected accounts</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {tasks.length === 0 && exports.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No maintenance tasks yet</strong>
+              <span>POST /api/v1/connector-maintenance/triage or /api/v1/offboarding/run.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {tasks.map((task) => (
+          <div className="connectionRow" key={task.id}>
+            <div>
+              <strong>
+                {task.findingType} · {task.connector}
+              </strong>
+              <span>
+                {task.connectedAccountId} · checkpoint {task.checkpointId ?? "none"}
+              </span>
+              <small>{task.recommendedAction}</small>
+            </div>
+            <span className={statusClass(task.status)}>{task.status}</span>
+          </div>
+        ))}
+        {exports.map((record) => (
+          <div className="connectionRow" key={record.id}>
+            <div>
+              <strong>offboarding · {record.subjectPrincipalId}</strong>
+              <span>
+                {record.exportedAtomIds.length} atoms · {record.exportedArtifactIds.length} artifacts ·{" "}
+                {record.revokedAccountIds.length + record.remappedAccountIds.length} accounts
+              </span>
+              {record.deniedReasons[0] ? <small>{record.deniedReasons[0]}</small> : null}
+            </div>
+            <span className={statusClass(record.status)}>{record.status}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 async function ArtifactProcessingPanel() {
   const state = await artifactProcessingPipeline.getState();
   const records = state.records.slice(0, 5);
@@ -1524,6 +1603,8 @@ export default async function Home() {
         </section>
 
         <ConnectorOpsPanel />
+
+        <ConnectorMaintenancePanel />
 
         <ArtifactProcessingPanel />
 

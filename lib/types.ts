@@ -260,9 +260,13 @@ export type BrainEvent = {
     | "cron.run"
     | "registry.publish"
     | "tool.invoke"
-    | "export";
+    | "export"
+    | "connector.triage"
+    | "offboarding.export"
+    | "access.revoke"
+    | "access.remap";
   targetId: string;
-  targetType: "artifact" | "atom" | "changeset" | RegistryKind | "cron-run";
+  targetType: "artifact" | "atom" | "changeset" | RegistryKind | "cron-run" | "connector" | "connected-account" | "principal";
   policyDecision: "allow" | "deny" | "needs-approval";
   metadata: Record<string, unknown>;
   createdAt: string;

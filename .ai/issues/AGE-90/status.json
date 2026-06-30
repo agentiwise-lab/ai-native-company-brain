@@ -1,0 +1,17 @@
+{
+  "identifier": "AGE-90",
+  "title": "Connector failure triage and offboarding export assistants",
+  "url": "https://linear.app/agentiwise/issue/AGE-90/connector-failure-triage-and-offboarding-export-assistants",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/connector-maintenance.test.ts",
+    "npm run ci"
+  ],
+  "implementation": [
+    "Connector maintenance assistant with triage repair tasks, offboarding exports, and audit events.",
+    "API routes for connector triage/status and offboarding run.",
+    "Compliance dashboard panel for maintenance tasks and offboarding audits."
+  ],
+  "updatedAt": "2026-06-30T13:08:30+05:30"
+}
