@@ -1,0 +1,17 @@
+{
+  "identifier": "AGE-89",
+  "title": "Registry drift and skill impact maintenance agent",
+  "url": "https://linear.app/agentiwise/issue/AGE-89/registry-drift-and-skill-impact-maintenance-agent",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/registry-maintenance-agent.test.ts",
+    "npm run ci"
+  ],
+  "implementation": [
+    "Registry maintenance scan service with findings, review changesets, approvals, duplicate suppression, and audit events.",
+    "API routes for registry maintenance scan and status.",
+    "Dashboard panel for registry maintenance findings and approvals."
+  ],
+  "updatedAt": "2026-06-30T13:00:14+05:30"
+}

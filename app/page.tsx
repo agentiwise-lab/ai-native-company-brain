@@ -23,6 +23,7 @@ import { packageDistributionService } from "@/lib/package-distribution";
 import { durableScheduler } from "@/lib/durable-scheduler";
 import { cronOutputDelivery } from "@/lib/cron-output-delivery";
 import { brainHealthAgent } from "@/lib/brain-health-agent";
+import { registryMaintenanceAgent } from "@/lib/registry-maintenance-agent";
 import { artifactProcessingPipeline } from "@/lib/artifact-processing";
 import { candidateExtractionWorker } from "@/lib/candidate-extraction";
 import { memoryConflictWorkflow } from "@/lib/memory-conflicts";
@@ -1230,6 +1231,69 @@ async function BrainHealthAgentPanel() {
   );
 }
 
+async function RegistryMaintenancePanel() {
+  const state = await registryMaintenanceAgent.getState();
+  const latestScan = state.scans[0];
+  const findings = state.findings.slice(0, 5);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Capability curation</p>
+          <h2>Registry maintenance</h2>
+        </div>
+        <span className={statusClass(latestScan?.status ?? "pending")}>{latestScan?.status ?? "pending"}</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Scans</span>
+          <strong>{state.scans.length}</strong>
+          <small>scheduled drift checks</small>
+        </div>
+        <div className="connectionItem">
+          <span>Findings</span>
+          <strong>{state.findings.length}</strong>
+          <small>dependency/policy/tool drift</small>
+        </div>
+        <div className="connectionItem">
+          <span>Changesets</span>
+          <strong>{state.changesets.length}</strong>
+          <small>review tasks opened</small>
+        </div>
+        <div className="connectionItem">
+          <span>Approvals</span>
+          <strong>{state.approvals.filter((approval) => approval.status === "pending").length}</strong>
+          <small>risky changes paused</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {findings.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No registry drift findings yet</strong>
+              <span>POST /api/v1/registry-maintenance/scan with dependency, policy, adapter, or Composio drift signals.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {findings.map((finding) => (
+          <div className="connectionRow" key={finding.id}>
+            <div>
+              <strong>
+                {finding.action} · {finding.packageSlug}@{finding.packageVersion}
+              </strong>
+              <span>{finding.recommendedAction}</span>
+              <small>{finding.evidence.join(", ")}</small>
+            </div>
+            <span className={statusClass(finding.risk === "high" ? "needs-approval" : "review")}>{finding.risk}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function AuditPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
   return (
     <section className="panel auditPanel">
@@ -1470,6 +1534,8 @@ export default async function Home() {
         <MemoryQualityPanel />
 
         <BrainHealthAgentPanel />
+
+        <RegistryMaintenancePanel />
 
         <SlackConnectorConsole
           tenantId={tenantId}
