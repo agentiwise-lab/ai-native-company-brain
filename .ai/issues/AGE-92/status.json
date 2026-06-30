@@ -1,0 +1,17 @@
+{
+  "identifier": "AGE-92",
+  "title": "Add Composio-first Zoom/Meet/Salesforce/HubSpot connector expansion",
+  "url": "https://linear.app/agentiwise/issue/AGE-92/add-composio-first-zoommeetsalesforcehubspot-connector-expansion",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/meeting-crm-composio-ingestion.test.ts",
+    "npm run ci"
+  ],
+  "implementation": [
+    "Meeting/CRM Composio ingestion module for Zoom, Google Meet-derived transcripts, Salesforce, and HubSpot.",
+    "API routes for meeting/CRM sync/status with test mock pages.",
+    "Dashboard panel for meeting/CRM artifact/checkpoint/run visibility and restricted data posture."
+  ],
+  "updatedAt": "2026-06-30T13:25:32+05:30"
+}
