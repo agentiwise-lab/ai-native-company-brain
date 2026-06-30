@@ -271,7 +271,12 @@ export type BrainEvent = {
     | "retention.run"
     | "legal-hold.apply"
     | "legal-hold.release"
-    | "answer.audit-pack";
+    | "answer.audit-pack"
+    | "ops.telemetry"
+    | "ops.health"
+    | "backup.create"
+    | "backup.restore"
+    | "migration.recover";
   targetId: string;
   targetType:
     | "artifact"
@@ -286,7 +291,11 @@ export type BrainEvent = {
     | "retention-policy"
     | "legal-hold"
     | "export"
-    | "answer-audit-pack";
+    | "answer-audit-pack"
+    | "ops"
+    | "backup"
+    | "restore"
+    | "migration";
   policyDecision: "allow" | "deny" | "needs-approval";
   metadata: Record<string, unknown>;
   createdAt: string;

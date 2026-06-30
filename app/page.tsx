@@ -39,6 +39,7 @@ import { composioIngestionPipeline, type ComposioIngestionState } from "@/lib/co
 import { connectorOps } from "@/lib/connector-ops";
 import { connectorMaintenanceAssistant } from "@/lib/connector-maintenance";
 import { complianceWorkflows } from "@/lib/compliance-workflows";
+import { operabilityService } from "@/lib/operability";
 import { enterpriseComposioIngestion } from "@/lib/enterprise-composio-ingestion";
 import { meetingCrmComposioIngestion } from "@/lib/meeting-crm-composio-ingestion";
 import { identityOrgSync } from "@/lib/identity-org-sync";
@@ -1097,6 +1098,102 @@ async function ComplianceWorkflowPanel() {
   );
 }
 
+async function OperabilityPanel() {
+  const state = await operabilityService.getState();
+  const latestHealth = state.healthSnapshots[0];
+  const latestBackup = state.backups[0];
+  const latestRestore = state.restores[0];
+  const migrations = state.migrationRecoveries.slice(0, 3);
+  const alerts = latestHealth?.alerts ?? [];
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Production ops</p>
+          <h2>Health, backups & deploys</h2>
+        </div>
+        <span className={statusClass(latestHealth?.status ?? "pending")}>{latestHealth?.status ?? "pending"}</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Health checks</span>
+          <strong>{state.healthSnapshots.length}</strong>
+          <small>{alerts.length} active alerts</small>
+        </div>
+        <div className="connectionItem">
+          <span>Backups</span>
+          <strong>{state.backups.length}</strong>
+          <small>{latestBackup?.checksum.slice(0, 18) ?? "none"}</small>
+        </div>
+        <div className="connectionItem">
+          <span>Restores</span>
+          <strong>{state.restores.length}</strong>
+          <small>{latestRestore?.status ?? "not run"}</small>
+        </div>
+        <div className="connectionItem">
+          <span>Telemetry</span>
+          <strong>{state.telemetryEvents.length}</strong>
+          <small>logs/metrics/traces</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {!latestHealth && !latestBackup && migrations.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No ops checks yet</strong>
+              <span>Use /api/v1/ops/health, /backup, /restore, or /migrations/recover.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {alerts.slice(0, 3).map((alert) => (
+          <div className="connectionRow" key={alert.id}>
+            <div>
+              <strong>{alert.kind}</strong>
+              <span>{alert.message}</span>
+            </div>
+            <span className={statusClass(alert.severity === "critical" ? "failed" : "warning")}>{alert.severity}</span>
+          </div>
+        ))}
+        {latestBackup ? (
+          <div className="connectionRow">
+            <div>
+              <strong>backup · {latestBackup.label}</strong>
+              <span>
+                {latestBackup.eventLedgerCount} events · {latestBackup.byteSize} bytes · {latestBackup.createdAt}
+              </span>
+            </div>
+            <span className={statusClass(latestBackup.status)}>{latestBackup.status}</span>
+          </div>
+        ) : null}
+        {latestRestore ? (
+          <div className="connectionRow">
+            <div>
+              <strong>restore · {latestRestore.backupId ?? "payload"}</strong>
+              <span>
+                checksum {latestRestore.checksumVerified ? "verified" : "failed"} · ledger{" "}
+                {latestRestore.eventLedgerVerified ? "verified" : "failed"}
+              </span>
+            </div>
+            <span className={statusClass(latestRestore.status)}>{latestRestore.status}</span>
+          </div>
+        ) : null}
+        {migrations.map((record) => (
+          <div className="connectionRow" key={record.id}>
+            <div>
+              <strong>migration · {record.migrationId}</strong>
+              <span>{record.failedStep}</span>
+              <small>{record.connectorReplayPlan[0] ?? record.rollbackCommands[0]}</small>
+            </div>
+            <span className="status statusWarn">{record.status}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 async function EnterpriseConnectorPanel() {
   const state = await enterpriseComposioIngestion.syncState();
   const connectors = ["microsoft-outlook", "microsoft-teams", "microsoft-sharepoint", "microsoft-onedrive", "jira", "confluence", "gitlab"];
@@ -1901,6 +1998,8 @@ export default async function Home() {
         <ConnectorMaintenancePanel />
 
         <ComplianceWorkflowPanel />
+
+        <OperabilityPanel />
 
         <IdentityOrgPanel />
 

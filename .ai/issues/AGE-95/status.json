@@ -1,0 +1,12 @@
+{
+  "identifier": "AGE-95",
+  "title": "Observability, backup/restore, and Helm deployment",
+  "url": "https://linear.app/agentiwise/issue/AGE-95/observability-backuprestore-and-helm-deployment",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/operability.test.ts",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-30T13:50:32+05:30"
+}

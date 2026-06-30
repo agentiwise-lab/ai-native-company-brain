@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: company-brain-app
+  labels:
+    app.kubernetes.io/name: company-brain
+    app.kubernetes.io/component: app
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: company-brain
+      app.kubernetes.io/component: app
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: company-brain
+        app.kubernetes.io/component: app
+    spec:
+      containers:
+        - name: app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.app.port }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default "company-brain-secrets" .Values.secrets.existingSecret }}
+                  key: {{ ternary .Values.externalPostgres.databaseUrlSecretKey "DATABASE_URL" .Values.externalPostgres.enabled }}
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default "company-brain-secrets" .Values.secrets.existingSecret }}
+                  key: {{ ternary .Values.externalRedis.redisUrlSecretKey "REDIS_URL" .Values.externalRedis.enabled }}
+            - name: COMPOSIO_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default "company-brain-secrets" .Values.secrets.existingSecret }}
+                  key: COMPOSIO_API_KEY
+            - name: S3_ENDPOINT
+              value: {{ .Values.objectStorage.endpoint | quote }}
+            - name: S3_BUCKET
+              value: {{ .Values.objectStorage.bucket | quote }}
+            - name: S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default "company-brain-secrets" .Values.secrets.existingSecret }}
+                  key: {{ .Values.objectStorage.accessKeySecretKey }}
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default "company-brain-secrets" .Values.secrets.existingSecret }}
+                  key: {{ .Values.objectStorage.secretKeySecretKey }}
+          readinessProbe:
+            httpGet:
+              path: /api/v1/ops/status
+              port: http

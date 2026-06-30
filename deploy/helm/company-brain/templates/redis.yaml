@@ -1,0 +1,42 @@
+{{- if .Values.redis.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: company-brain-redis
+spec:
+  serviceName: company-brain-redis
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: company-brain-redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: company-brain-redis
+    spec:
+      containers:
+        - name: redis
+          image: {{ .Values.redis.image }}
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.redis.storageSize }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: company-brain-redis
+spec:
+  selector:
+    app.kubernetes.io/name: company-brain-redis
+  ports:
+    - port: 6379
+{{- end }}

@@ -1,0 +1,33 @@
+{{- if .Values.workers.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: company-brain-worker
+  labels:
+    app.kubernetes.io/name: company-brain
+    app.kubernetes.io/component: worker
+spec:
+  replicas: {{ .Values.workers.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: company-brain
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: company-brain
+        app.kubernetes.io/component: worker
+    spec:
+      containers:
+        - name: worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: {{ toJson .Values.workers.command }}
+          envFrom:
+            - secretRef:
+                name: {{ default "company-brain-secrets" .Values.secrets.existingSecret }}
+          env:
+            - name: WORKER_ROLE
+              value: worker
+            - name: OBJECT_STORE_ENDPOINT
+              value: {{ .Values.objectStorage.endpoint | quote }}
+{{- end }}
