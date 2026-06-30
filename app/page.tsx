@@ -38,6 +38,7 @@ import { composioControlPlane, type ComposioState } from "@/lib/composio-control
 import { composioIngestionPipeline, type ComposioIngestionState } from "@/lib/composio-ingestion";
 import { connectorOps } from "@/lib/connector-ops";
 import { connectorMaintenanceAssistant } from "@/lib/connector-maintenance";
+import { complianceWorkflows } from "@/lib/compliance-workflows";
 import { enterpriseComposioIngestion } from "@/lib/enterprise-composio-ingestion";
 import { meetingCrmComposioIngestion } from "@/lib/meeting-crm-composio-ingestion";
 import { identityOrgSync } from "@/lib/identity-org-sync";
@@ -60,7 +61,7 @@ const tierLabels: Record<BrainTier, string> = {
 };
 
 function statusClass(status: string) {
-  if (["published", "approved", "passed", "succeeded", "delivered", "suppressed", "merged", "active", "configured"].includes(status)) {
+  if (["published", "approved", "passed", "succeeded", "delivered", "suppressed", "merged", "active", "configured", "completed"].includes(status)) {
     return "status statusGood";
   }
   if (["review", "warning", "needs-approval", "checks-running", "pending", "queued", "running", "retried"].includes(status)) {
@@ -992,6 +993,110 @@ async function ConnectorMaintenancePanel() {
   );
 }
 
+async function ComplianceWorkflowPanel() {
+  const state = await complianceWorkflows.getState();
+  const activeHolds = state.legalHolds.filter((hold) => hold.active);
+  const latestRun = state.retentionRuns[0];
+  const latestExports = state.memoryExports.slice(0, 3);
+  const latestPacks = state.answerAuditPacks.slice(0, 2);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Compliance controls</p>
+          <h2>Retention, holds & audit packs</h2>
+        </div>
+        <span className={statusClass(activeHolds.length > 0 ? "needs-approval" : "completed")}>{activeHolds.length} holds</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Rules</span>
+          <strong>{state.retentionRules.length}</strong>
+          <small>source/tier/sensitivity</small>
+        </div>
+        <div className="connectionItem">
+          <span>Retention runs</span>
+          <strong>{state.retentionRuns.length}</strong>
+          <small>{latestRun ? `${latestRun.deletedAtomIds.length} deleted` : "not run"}</small>
+        </div>
+        <div className="connectionItem">
+          <span>Exports</span>
+          <strong>{state.memoryExports.length}</strong>
+          <small>individual/org packs</small>
+        </div>
+        <div className="connectionItem">
+          <span>Answer packs</span>
+          <strong>{state.answerAuditPacks.length}</strong>
+          <small>response lineage</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {state.retentionRules.length === 0 && state.legalHolds.length === 0 && latestExports.length === 0 && latestPacks.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No compliance workflows yet</strong>
+              <span>Use /api/v1/compliance/retention/configure, /legal-holds, /exports, or /audit-packs.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {state.retentionRules.slice(0, 3).map((rule) => (
+          <div className="connectionRow" key={rule.id}>
+            <div>
+              <strong>{rule.id}</strong>
+              <span>
+                {rule.sourceType ?? "any source"} · {rule.tier ?? "any tier"} · {rule.sensitivity ?? "any sensitivity"}
+              </span>
+              <small>
+                {rule.retentionDays} days · {rule.deletionBehavior}
+              </small>
+            </div>
+            <span className="status statusGood">configured</span>
+          </div>
+        ))}
+        {activeHolds.slice(0, 3).map((hold) => (
+          <div className="connectionRow" key={hold.id}>
+            <div>
+              <strong>
+                hold · {hold.targetType}:{hold.targetId}
+              </strong>
+              <span>{hold.reason}</span>
+              <small>created by {hold.createdBy}</small>
+            </div>
+            <span className="status statusWarn">active</span>
+          </div>
+        ))}
+        {latestExports.map((record) => (
+          <div className="connectionRow" key={record.id}>
+            <div>
+              <strong>
+                export · {record.scope}
+              </strong>
+              <span>
+                {record.atomIds.length} atoms · {record.sourceIds.length} sources · {record.deniedReasons[0] ?? "policy context attached"}
+              </span>
+            </div>
+            <span className={statusClass(record.status)}>{record.status}</span>
+          </div>
+        ))}
+        {latestPacks.map((pack) => (
+          <div className="connectionRow" key={pack.id}>
+            <div>
+              <strong>answer pack · {pack.retrievedAtomIds.length} atoms</strong>
+              <span>{pack.query}</span>
+              <small>
+                {pack.sourceIds.length} sources · {pack.toolEvents.length} tools · {pack.cronEvents.length} cron events
+              </small>
+            </div>
+            <span className="status statusGood">ready</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 async function EnterpriseConnectorPanel() {
   const state = await enterpriseComposioIngestion.syncState();
   const connectors = ["microsoft-outlook", "microsoft-teams", "microsoft-sharepoint", "microsoft-onedrive", "jira", "confluence", "gitlab"];
@@ -1794,6 +1899,8 @@ export default async function Home() {
         <ConnectorOpsPanel />
 
         <ConnectorMaintenancePanel />
+
+        <ComplianceWorkflowPanel />
 
         <IdentityOrgPanel />
 

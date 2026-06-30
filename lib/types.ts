@@ -266,9 +266,27 @@ export type BrainEvent = {
     | "access.revoke"
     | "access.remap"
     | "identity.configure"
-    | "identity.scim.sync";
+    | "identity.scim.sync"
+    | "retention.configure"
+    | "retention.run"
+    | "legal-hold.apply"
+    | "legal-hold.release"
+    | "answer.audit-pack";
   targetId: string;
-  targetType: "artifact" | "atom" | "changeset" | RegistryKind | "cron-run" | "connector" | "connected-account" | "principal" | "identity";
+  targetType:
+    | "artifact"
+    | "atom"
+    | "changeset"
+    | RegistryKind
+    | "cron-run"
+    | "connector"
+    | "connected-account"
+    | "principal"
+    | "identity"
+    | "retention-policy"
+    | "legal-hold"
+    | "export"
+    | "answer-audit-pack";
   policyDecision: "allow" | "deny" | "needs-approval";
   metadata: Record<string, unknown>;
   createdAt: string;
