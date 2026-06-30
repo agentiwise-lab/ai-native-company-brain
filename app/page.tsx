@@ -38,6 +38,7 @@ import { composioControlPlane, type ComposioState } from "@/lib/composio-control
 import { composioIngestionPipeline, type ComposioIngestionState } from "@/lib/composio-ingestion";
 import { connectorOps } from "@/lib/connector-ops";
 import { connectorMaintenanceAssistant } from "@/lib/connector-maintenance";
+import { enterpriseComposioIngestion } from "@/lib/enterprise-composio-ingestion";
 import { BrainWorkbench } from "@/app/brain-workbench";
 import { FlexibleConnectorConsole } from "@/app/flexible-connector-console";
 import { GoogleConnectorConsole } from "@/app/google-connector-console";
@@ -989,6 +990,69 @@ async function ConnectorMaintenancePanel() {
   );
 }
 
+async function EnterpriseConnectorPanel() {
+  const state = await enterpriseComposioIngestion.syncState();
+  const connectors = ["microsoft-outlook", "microsoft-teams", "microsoft-sharepoint", "microsoft-onedrive", "jira", "confluence", "gitlab"];
+  const latestArtifacts = state.artifacts.slice(0, 5);
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Enterprise sources</p>
+          <h2>Microsoft, Jira, Confluence, GitLab</h2>
+        </div>
+        <span className="status">{state.artifacts.length} artifacts</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Connectors</span>
+          <strong>{connectors.length}</strong>
+          <small>Composio-first</small>
+        </div>
+        <div className="connectionItem">
+          <span>Checkpoints</span>
+          <strong>{state.checkpoints.length}</strong>
+          <small>backfill/incremental</small>
+        </div>
+        <div className="connectionItem">
+          <span>Runs</span>
+          <strong>{state.runs.length}</strong>
+          <small>health/replay ready</small>
+        </div>
+        <div className="connectionItem">
+          <span>Fallback</span>
+          <strong>gated</strong>
+          <small>ACL/delta/webhook</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {latestArtifacts.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No enterprise artifacts yet</strong>
+              <span>POST /api/v1/ingestion/enterprise/sync with selected enterprise sources.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {latestArtifacts.map((artifact) => (
+          <div className="connectionRow" key={artifact.id}>
+            <div>
+              <strong>{artifact.source.title}</strong>
+              <span>
+                {artifact.connector} · {artifact.sourceObjectId}
+              </span>
+              <small>{artifact.provenanceUrl}</small>
+            </div>
+            <span className={statusClass(artifact.acl.sensitivity)}>{artifact.acl.sensitivity}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 async function ArtifactProcessingPanel() {
   const state = await artifactProcessingPipeline.getState();
   const records = state.records.slice(0, 5);
@@ -1605,6 +1669,8 @@ export default async function Home() {
         <ConnectorOpsPanel />
 
         <ConnectorMaintenancePanel />
+
+        <EnterpriseConnectorPanel />
 
         <ArtifactProcessingPanel />
 

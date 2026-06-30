@@ -1,0 +1,17 @@
+{
+  "identifier": "AGE-91",
+  "title": "Add Composio-first Microsoft/Jira/Confluence/GitLab connector expansion",
+  "url": "https://linear.app/agentiwise/issue/AGE-91/add-composio-first-microsoftjiraconfluencegitlab-connector-expansion",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/enterprise-composio-ingestion.test.ts",
+    "npm run ci"
+  ],
+  "implementation": [
+    "Enterprise Composio ingestion module for Microsoft, Jira, Confluence, and GitLab source kinds.",
+    "API routes for enterprise sync/status with test mock pages.",
+    "Dashboard panel for enterprise connector artifact/checkpoint/run visibility and fallback gating."
+  ],
+  "updatedAt": "2026-06-30T13:17:05+05:30"
+}
