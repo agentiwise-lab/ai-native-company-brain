@@ -1,0 +1,12 @@
+{
+  "identifier": "AGE-96",
+  "title": "Managed cloud tenant provisioning",
+  "url": "https://linear.app/agentiwise/issue/AGE-96/managed-cloud-tenant-provisioning",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/cloud-control-plane.test.ts",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-30T13:57:54+05:30"
+}

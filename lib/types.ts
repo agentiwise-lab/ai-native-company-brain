@@ -276,7 +276,12 @@ export type BrainEvent = {
     | "ops.health"
     | "backup.create"
     | "backup.restore"
-    | "migration.recover";
+    | "migration.recover"
+    | "cloud.tenant.provision"
+    | "cloud.tenant.rollback"
+    | "cloud.access.check"
+    | "cloud.secret.rotate"
+    | "cloud.export";
   targetId: string;
   targetType:
     | "artifact"
@@ -295,7 +300,9 @@ export type BrainEvent = {
     | "ops"
     | "backup"
     | "restore"
-    | "migration";
+    | "migration"
+    | "cloud-tenant"
+    | "cloud-secret";
   policyDecision: "allow" | "deny" | "needs-approval";
   metadata: Record<string, unknown>;
   createdAt: string;

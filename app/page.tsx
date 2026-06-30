@@ -40,6 +40,7 @@ import { connectorOps } from "@/lib/connector-ops";
 import { connectorMaintenanceAssistant } from "@/lib/connector-maintenance";
 import { complianceWorkflows } from "@/lib/compliance-workflows";
 import { operabilityService } from "@/lib/operability";
+import { cloudControlPlane } from "@/lib/cloud-control-plane";
 import { enterpriseComposioIngestion } from "@/lib/enterprise-composio-ingestion";
 import { meetingCrmComposioIngestion } from "@/lib/meeting-crm-composio-ingestion";
 import { identityOrgSync } from "@/lib/identity-org-sync";
@@ -68,7 +69,7 @@ function statusClass(status: string) {
   if (["review", "warning", "needs-approval", "checks-running", "pending", "queued", "running", "retried"].includes(status)) {
     return "status statusWarn";
   }
-  if (["blocked", "canceled", "denied", "failed", "rejected", "revoked", "errored"].includes(status)) {
+  if (["blocked", "canceled", "denied", "failed", "rejected", "revoked", "errored", "rolled-back"].includes(status)) {
     return "status statusBad";
   }
   return "status";
@@ -1194,6 +1195,85 @@ async function OperabilityPanel() {
   );
 }
 
+async function CloudControlPanel() {
+  const state = await cloudControlPlane.getState();
+  const tenants = state.tenants.slice(0, 4);
+  const activeTenants = state.tenants.filter((tenant) => tenant.status === "active");
+  const failedDiagnostics = state.tenants.flatMap((tenant) => tenant.diagnostics.filter((check) => check.status === "failed"));
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Managed cloud</p>
+          <h2>Tenant provisioning</h2>
+        </div>
+        <span className={statusClass(failedDiagnostics.length > 0 ? "failed" : "completed")}>{activeTenants.length} active</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Tenants</span>
+          <strong>{state.tenants.length}</strong>
+          <small>{state.tenants.filter((tenant) => tenant.status === "rolled-back").length} rolled back</small>
+        </div>
+        <div className="connectionItem">
+          <span>Secret rotations</span>
+          <strong>{state.secretRotations.length}</strong>
+          <small>tenant scoped</small>
+        </div>
+        <div className="connectionItem">
+          <span>Exports</span>
+          <strong>{state.exports.length}</strong>
+          <small>cloud to self-host</small>
+        </div>
+        <div className="connectionItem">
+          <span>Audit</span>
+          <strong>{state.auditEvents.length}</strong>
+          <small>isolation events</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {tenants.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No cloud tenants yet</strong>
+              <span>POST /api/v1/cloud/tenants to provision managed database, storage, queue, and secrets.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {tenants.map((tenant) => (
+          <div className="connectionRow" key={tenant.id}>
+            <div>
+              <strong>{tenant.name}</strong>
+              <span>
+                {tenant.region} · {tenant.plan} · {tenant.resources.storageBucket}
+              </span>
+              <small>
+                {tenant.composioHandoff.status} · {tenant.isolation.storagePrefix}
+              </small>
+            </div>
+            <span className={statusClass(tenant.status)}>{tenant.status}</span>
+          </div>
+        ))}
+        {state.secretRotations.slice(0, 3).map((rotation) => (
+          <div className="connectionRow" key={rotation.id}>
+            <div>
+              <strong>
+                rotation · {rotation.secretName}
+              </strong>
+              <span>
+                {rotation.tenantId} · {rotation.newRef}
+              </span>
+            </div>
+            <span className={statusClass(rotation.status)}>{rotation.status}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 async function EnterpriseConnectorPanel() {
   const state = await enterpriseComposioIngestion.syncState();
   const connectors = ["microsoft-outlook", "microsoft-teams", "microsoft-sharepoint", "microsoft-onedrive", "jira", "confluence", "gitlab"];
@@ -2000,6 +2080,8 @@ export default async function Home() {
         <ComplianceWorkflowPanel />
 
         <OperabilityPanel />
+
+        <CloudControlPanel />
 
         <IdentityOrgPanel />
 
