@@ -1,0 +1,12 @@
+{
+  "identifier": "AGE-93",
+  "title": "SAML/SCIM org sync and access revocation",
+  "url": "https://linear.app/agentiwise/issue/AGE-93/samlscim-org-sync-and-access-revocation",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/identity-org-sync.test.ts",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-30T13:34:01+05:30"
+}

@@ -45,6 +45,13 @@ export type ToolExecutorInput = {
 type GatewayOptions = {
   store?: ToolInvocationStore;
   controlPlane?: { getState(): Promise<ComposioState> };
+  identityProvider?: {
+    canUseComposioSession(
+      principalId: string,
+      sessionId?: string,
+      connectedAccountId?: string
+    ): Promise<{ allowed: boolean; reasons: string[] }>;
+  };
   executor?: (input: ToolExecutorInput) => Promise<Record<string, unknown>>;
   now?: () => string;
   id?: (prefix: string) => string;
@@ -176,6 +183,7 @@ function createRecord(input: {
 export function createToolInvocationGateway(options: GatewayOptions = {}) {
   const store = options.store ?? createFileStore();
   const controlPlane = options.controlPlane ?? composioControlPlane;
+  const identityProvider = options.identityProvider;
   const executor = options.executor ?? (async () => ({ ok: true, simulated: true }));
   const now = options.now ?? (() => new Date().toISOString());
   const id = options.id ?? defaultId;
@@ -252,6 +260,12 @@ export function createToolInvocationGateway(options: GatewayOptions = {}) {
       }
       if (!session) {
         reasons.push("No active Composio session matches principal, purpose, and connected account.");
+      }
+      if (identityProvider) {
+        const identityDecision = await identityProvider.canUseComposioSession(input.principal.id, session?.id, input.connectedAccountId);
+        if (!identityDecision.allowed) {
+          reasons.push(...identityDecision.reasons);
+        }
       }
       if (input.budgetUsd <= 0) {
         reasons.push("Budget must be positive.");

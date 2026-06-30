@@ -264,9 +264,11 @@ export type BrainEvent = {
     | "connector.triage"
     | "offboarding.export"
     | "access.revoke"
-    | "access.remap";
+    | "access.remap"
+    | "identity.configure"
+    | "identity.scim.sync";
   targetId: string;
-  targetType: "artifact" | "atom" | "changeset" | RegistryKind | "cron-run" | "connector" | "connected-account" | "principal";
+  targetType: "artifact" | "atom" | "changeset" | RegistryKind | "cron-run" | "connector" | "connected-account" | "principal" | "identity";
   policyDecision: "allow" | "deny" | "needs-approval";
   metadata: Record<string, unknown>;
   createdAt: string;

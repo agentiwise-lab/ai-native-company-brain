@@ -40,6 +40,7 @@ import { connectorOps } from "@/lib/connector-ops";
 import { connectorMaintenanceAssistant } from "@/lib/connector-maintenance";
 import { enterpriseComposioIngestion } from "@/lib/enterprise-composio-ingestion";
 import { meetingCrmComposioIngestion } from "@/lib/meeting-crm-composio-ingestion";
+import { identityOrgSync } from "@/lib/identity-org-sync";
 import { BrainWorkbench } from "@/app/brain-workbench";
 import { FlexibleConnectorConsole } from "@/app/flexible-connector-console";
 import { GoogleConnectorConsole } from "@/app/google-connector-console";
@@ -1116,6 +1117,67 @@ async function MeetingCrmConnectorPanel() {
   );
 }
 
+async function IdentityOrgPanel() {
+  const state = await identityOrgSync.getState();
+  const deactivated = state.users.filter((user) => !user.active).length;
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Enterprise identity</p>
+          <h2>SAML & SCIM org graph</h2>
+        </div>
+        <span className={statusClass(state.config ? "configured" : "pending")}>{state.config ? "configured" : "pending"}</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Users</span>
+          <strong>{state.users.length}</strong>
+          <small>{deactivated} deactivated</small>
+        </div>
+        <div className="connectionItem">
+          <span>Groups</span>
+          <strong>{state.groups.length}</strong>
+          <small>tier/policy mapped</small>
+        </div>
+        <div className="connectionItem">
+          <span>Revokes</span>
+          <strong>{state.revocations.length}</strong>
+          <small>UI/API/MCP/tools</small>
+        </div>
+        <div className="connectionItem">
+          <span>Audit</span>
+          <strong>{state.auditEvents.length}</strong>
+          <small>identity events</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {state.users.slice(0, 5).map((user) => (
+          <div className="connectionRow" key={user.id}>
+            <div>
+              <strong>{user.name}</strong>
+              <span>
+                {user.email} · groups {user.groupIds.join(", ") || "none"}
+              </span>
+            </div>
+            <span className={statusClass(user.active ? "active" : "revoked")}>{user.active ? "active" : "deactivated"}</span>
+          </div>
+        ))}
+        {state.users.length === 0 ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No SCIM users synced yet</strong>
+              <span>POST /api/v1/identity/configure, then /api/v1/identity/scim/sync.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 async function ArtifactProcessingPanel() {
   const state = await artifactProcessingPipeline.getState();
   const records = state.records.slice(0, 5);
@@ -1732,6 +1794,8 @@ export default async function Home() {
         <ConnectorOpsPanel />
 
         <ConnectorMaintenancePanel />
+
+        <IdentityOrgPanel />
 
         <EnterpriseConnectorPanel />
 
