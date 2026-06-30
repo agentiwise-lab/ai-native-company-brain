@@ -41,6 +41,7 @@ import { connectorMaintenanceAssistant } from "@/lib/connector-maintenance";
 import { complianceWorkflows } from "@/lib/compliance-workflows";
 import { operabilityService } from "@/lib/operability";
 import { cloudControlPlane } from "@/lib/cloud-control-plane";
+import { managedOpsService } from "@/lib/managed-ops";
 import { enterpriseComposioIngestion } from "@/lib/enterprise-composio-ingestion";
 import { meetingCrmComposioIngestion } from "@/lib/meeting-crm-composio-ingestion";
 import { identityOrgSync } from "@/lib/identity-org-sync";
@@ -63,10 +64,10 @@ const tierLabels: Record<BrainTier, string> = {
 };
 
 function statusClass(status: string) {
-  if (["published", "approved", "passed", "succeeded", "delivered", "suppressed", "merged", "active", "configured", "completed"].includes(status)) {
+  if (["published", "approved", "passed", "succeeded", "delivered", "suppressed", "merged", "active", "configured", "completed", "rotated", "planned"].includes(status)) {
     return "status statusGood";
   }
-  if (["review", "warning", "needs-approval", "checks-running", "pending", "queued", "running", "retried"].includes(status)) {
+  if (["review", "warning", "needs-approval", "checks-running", "pending", "queued", "running", "retried", "recovery-ready"].includes(status)) {
     return "status statusWarn";
   }
   if (["blocked", "canceled", "denied", "failed", "rejected", "revoked", "errored", "rolled-back"].includes(status)) {
@@ -1274,6 +1275,107 @@ async function CloudControlPanel() {
   );
 }
 
+async function ManagedOpsPanel() {
+  const state = await managedOpsService.getState();
+  const latestSummary = state.usageSummaries[0];
+  const latestRecovery = state.workerRecoveries[0];
+  const latestUpgrade = state.upgradePlans[0];
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Managed operations</p>
+          <h2>Usage, limits & upgrades</h2>
+        </div>
+        <span className={statusClass(state.alerts.length > 0 ? "warning" : "completed")}>{state.alerts.length} alerts</span>
+      </div>
+      <div className="connectionGrid">
+        <div className="connectionItem">
+          <span>Usage events</span>
+          <strong>{state.usageEvents.length}</strong>
+          <small>{latestSummary ? `$${latestSummary.costUsd}` : "no usage"}</small>
+        </div>
+        <div className="connectionItem">
+          <span>Queries</span>
+          <strong>{latestSummary?.usage.queryCount ?? 0}</strong>
+          <small>metered by tenant</small>
+        </div>
+        <div className="connectionItem">
+          <span>Cron runs</span>
+          <strong>{latestSummary?.usage.cronRuns ?? 0}</strong>
+          <small>budget checked</small>
+        </div>
+        <div className="connectionItem">
+          <span>Upgrades</span>
+          <strong>{state.upgradePlans.length}</strong>
+          <small>checkpoint replay</small>
+        </div>
+      </div>
+      <div className="connectionList">
+        {!latestSummary && !latestRecovery && !latestUpgrade ? (
+          <div className="connectionRow">
+            <div>
+              <strong>No managed ops events yet</strong>
+              <span>Use /api/v1/managed-ops/usage, /limits/check, /workers/recover, or /upgrades/plan.</span>
+            </div>
+            <span className="status">empty</span>
+          </div>
+        ) : null}
+        {state.alerts.slice(0, 3).map((alert) => (
+          <div className="connectionRow" key={alert.id}>
+            <div>
+              <strong>{alert.kind}</strong>
+              <span>{alert.tenantId}</span>
+              <small>{alert.message}</small>
+            </div>
+            <span className={statusClass(alert.severity === "critical" ? "failed" : "warning")}>{alert.severity}</span>
+          </div>
+        ))}
+        {latestSummary ? (
+          <div className="connectionRow">
+            <div>
+              <strong>usage · {latestSummary.tenantId}</strong>
+              <span>
+                {latestSummary.usage.connectorSyncs} syncs · {latestSummary.usage.composioActions} actions ·{" "}
+                {latestSummary.usage.workerMs} worker ms
+              </span>
+              <small>
+                {latestSummary.percentOfBudget}% of ${latestSummary.limits.budgetUsd} budget
+              </small>
+            </div>
+            <span className="status statusGood">{latestSummary.plan}</span>
+          </div>
+        ) : null}
+        {latestRecovery ? (
+          <div className="connectionRow">
+            <div>
+              <strong>worker recovery · {latestRecovery.workerId}</strong>
+              <span>{latestRecovery.recoverySteps[0]}</span>
+              <small>{latestRecovery.replayPlan[0] ?? "no checkpoint replay required"}</small>
+            </div>
+            <span className={statusClass(latestRecovery.status)}>{latestRecovery.status}</span>
+          </div>
+        ) : null}
+        {latestUpgrade ? (
+          <div className="connectionRow">
+            <div>
+              <strong>
+                upgrade · {latestUpgrade.fromVersion} {"->"} {latestUpgrade.toVersion}
+              </strong>
+              <span>{latestUpgrade.tenantId}</span>
+              <small>
+                {latestUpgrade.preserved.connectorCheckpoints.length} checkpoints · {latestUpgrade.preserved.cronSchedules.length} cron schedules
+              </small>
+            </div>
+            <span className={statusClass(latestUpgrade.status)}>{latestUpgrade.status}</span>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 async function EnterpriseConnectorPanel() {
   const state = await enterpriseComposioIngestion.syncState();
   const connectors = ["microsoft-outlook", "microsoft-teams", "microsoft-sharepoint", "microsoft-onedrive", "jira", "confluence", "gitlab"];
@@ -2082,6 +2184,8 @@ export default async function Home() {
         <OperabilityPanel />
 
         <CloudControlPanel />
+
+        <ManagedOpsPanel />
 
         <IdentityOrgPanel />
 

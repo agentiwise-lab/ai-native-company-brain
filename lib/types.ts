@@ -281,7 +281,12 @@ export type BrainEvent = {
     | "cloud.tenant.rollback"
     | "cloud.access.check"
     | "cloud.secret.rotate"
-    | "cloud.export";
+    | "cloud.export"
+    | "managed-ops.usage.record"
+    | "managed-ops.plan.block"
+    | "managed-ops.support.view"
+    | "managed-ops.worker.recover"
+    | "managed-ops.upgrade.plan";
   targetId: string;
   targetType:
     | "artifact"

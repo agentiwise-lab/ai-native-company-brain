@@ -1,0 +1,12 @@
+{
+  "identifier": "AGE-97",
+  "title": "Managed Composio connector and scheduler operations with usage metering",
+  "url": "https://linear.app/agentiwise/issue/AGE-97/managed-composio-connector-and-scheduler-operations-with-usage",
+  "state": "In Progress",
+  "branchName": "harshit/all-linear-issues-buildout",
+  "localVerification": [
+    "npm test -- tests/managed-ops.test.ts",
+    "npm run ci"
+  ],
+  "updatedAt": "2026-06-30T14:04:17+05:30"
+}
