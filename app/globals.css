@@ -1,17 +1,20 @@
 :root {
-  --bg: #f6f7f4;
+  --bg: #f5f7f2;
   --panel: #ffffff;
-  --panel-2: #eef2ee;
-  --ink: #111713;
-  --muted: #5c665e;
-  --faint: #879088;
-  --line: #dce2dd;
-  --green: #116b55;
-  --green-2: #1b8a68;
-  --amber: #a96d2f;
-  --red: #a2403a;
-  --blue: #315f86;
-  --shadow: 0 18px 50px rgba(30, 40, 35, 0.08);
+  --panel-2: #eef2ec;
+  --ink: #111512;
+  --muted: #59635d;
+  --faint: #8a938d;
+  --line: #d9ded6;
+  --green: #12745a;
+  --green-2: #1f9872;
+  --amber: #b6792d;
+  --red: #b24e5f;
+  --blue: #2b63b7;
+  --violet: #6e54b5;
+  --graphite: #151a17;
+  --paper: #fbfbf7;
+  --shadow: 0 12px 34px rgba(21, 26, 23, 0.055);
 }
 
 * {
@@ -32,6 +35,11 @@ body {
   color: var(--ink);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -57,38 +65,91 @@ code {
 .setupShell {
   display: grid;
   min-height: 100vh;
-  place-items: center;
-  padding: 24px;
+  align-items: start;
+  padding: 28px;
 }
 
 .setupPanel {
   display: grid;
-  grid-template-columns: minmax(260px, 0.8fr) minmax(320px, 1fr);
+  grid-template-columns: minmax(280px, 0.56fr) minmax(360px, 1fr);
   gap: 28px;
-  inline-size: min(980px, 100%);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--panel);
-  padding: 28px;
-  box-shadow: var(--shadow);
+  inline-size: min(1280px, 100%);
+  margin: 0 auto;
 }
 
 .setupIntro {
+  position: sticky;
+  top: 28px;
   display: grid;
   align-content: start;
-  gap: 16px;
+  gap: 18px;
+  min-height: calc(100vh - 56px);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #16251f;
+  color: #eff6f2;
+  padding: 24px;
+  box-shadow: var(--shadow);
 }
 
 .setupIntro h1 {
-  font-size: clamp(2.4rem, 6vw, 4.7rem);
+  font-size: 3.4rem;
+  font-weight: 560;
+  line-height: 0.93;
+}
+
+.setupIntro p:not(.eyebrow) {
+  max-width: 50ch;
+  margin: 0;
+  color: #c3d1c9;
+  line-height: 1.55;
+}
+
+.setupMilestones {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: auto;
+}
+
+.setupMilestones span {
+  border: 1px solid rgba(239, 246, 242, 0.18);
+  border-radius: 8px;
+  padding: 9px 8px;
+  color: #dce7e1;
+  font-size: 0.72rem;
+  font-weight: 520;
+  text-align: center;
+  text-transform: none;
 }
 
 .setupForm {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
-.setupForm label {
+.setupStage {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+.setupStage legend {
+  padding: 0 6px;
+  color: var(--green);
+  font-size: 0.76rem;
+  font-weight: 520;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.setupForm label,
+.setupOption span {
   display: grid;
   gap: 7px;
 }
@@ -96,10 +157,11 @@ code {
 .setupForm label span {
   color: var(--muted);
   font-size: 0.86rem;
-  font-weight: 700;
+  font-weight: 520;
 }
 
-.setupForm input {
+.setupForm input,
+.setupForm textarea {
   inline-size: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -108,20 +170,92 @@ code {
   padding: 11px 12px;
 }
 
-.setupForm input:focus {
+.setupForm textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.setupForm input:focus,
+.setupForm textarea:focus {
   border-color: rgba(17, 107, 85, 0.7);
   outline: 3px solid rgba(17, 107, 85, 0.12);
+}
+
+.setupTwo,
+.setupOptionGrid,
+.setupCheckGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.setupTwo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.setupOptionGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.setupCheckGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.setupOption {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: flex-start;
+  min-height: 118px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 12px;
+}
+
+.setupOption input {
+  inline-size: 18px;
+  block-size: 18px;
+  margin-top: 1px;
+}
+
+.setupOption strong {
+  color: var(--ink);
+}
+
+.setupOption small {
+  color: var(--muted);
+  line-height: 1.4;
 }
 
 .setupCheck {
   display: flex !important;
   align-items: center;
   gap: 10px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 9px 11px;
 }
 
 .setupCheck input {
   inline-size: 18px;
   block-size: 18px;
+}
+
+.setupSubmitBar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 14px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
 }
 
 .setupForm button {
@@ -130,7 +264,7 @@ code {
   background: var(--green);
   color: white;
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 560;
   padding: 12px 14px;
 }
 
@@ -138,6 +272,92 @@ code {
 .setupForm button:focus-visible {
   background: var(--green-2);
   outline: none;
+}
+
+.scopeSwitcher {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.scopeSwitcher h2 {
+  font-size: 1rem;
+}
+
+.scopeChipRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.scopeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  padding: 8px 11px;
+  font-size: 0.82rem;
+  font-weight: 520;
+}
+
+.scopeChip:hover,
+.scopeChip:focus-visible,
+.scopeChipActive {
+  border-color: rgba(17, 107, 85, 0.38);
+  background: #e5f4ec;
+  color: var(--green);
+  outline: none;
+}
+
+.commandPanel {
+  display: grid;
+  gap: 16px;
+}
+
+.commandGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.commandMetric {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 12px;
+}
+
+.commandMetric svg {
+  color: var(--green);
+}
+
+.commandMetric span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.commandColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.commandColumns h3 {
+  margin: 0 0 10px;
+  font-size: 0.86rem;
 }
 
 .appShell {
@@ -177,7 +397,7 @@ code {
 .brandMark {
   width: 42px;
   height: 42px;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .brand strong,
@@ -241,9 +461,9 @@ code {
   margin: 0 0 8px;
   color: var(--green);
   font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-weight: 520;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 h1,
@@ -254,12 +474,14 @@ h2 {
 
 h1 {
   max-width: 900px;
-  font-size: clamp(2rem, 4.4vw, 4.2rem);
+  font-size: 3.45rem;
+  font-weight: 560;
   line-height: 0.97;
 }
 
 h2 {
   font-size: 1.08rem;
+  font-weight: 540;
 }
 
 .searchBox {
@@ -280,7 +502,7 @@ h2 {
   grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.35fr);
   gap: 24px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   background: #15211c;
   color: #edf4ef;
   padding: 24px;
@@ -296,7 +518,8 @@ h2 {
 
 .heroCopy h2 {
   max-width: 12ch;
-  font-size: clamp(2rem, 4vw, 4.6rem);
+  font-size: 3.2rem;
+  font-weight: 560;
   line-height: 0.92;
 }
 
@@ -364,7 +587,7 @@ h2 {
 .metricPanel,
 .panel {
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.88);
   box-shadow: var(--shadow);
 }
@@ -392,7 +615,7 @@ h2 {
 .metricValue {
   margin: 3px 0;
   font-size: 1.85rem;
-  font-weight: 800;
+  font-weight: 560;
   line-height: 1;
 }
 
@@ -426,8 +649,8 @@ h2 {
   padding: 4px 8px;
   color: var(--muted);
   font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-weight: 520;
+  text-transform: none;
 }
 
 .statusGood {
@@ -472,7 +695,7 @@ h2 {
   border-radius: 8px;
   color: var(--green);
   font-size: 0.76rem;
-  font-weight: 900;
+  font-weight: 540;
 }
 
 .tierBody,
@@ -556,9 +779,9 @@ h2 {
   padding: 10px 12px;
   color: var(--green);
   font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 540;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .registryItem {
@@ -673,8 +896,8 @@ h2 {
 .workbenchForm label span {
   color: var(--muted);
   font-size: 0.78rem;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-weight: 520;
+  text-transform: none;
 }
 
 .workbenchForm input,
@@ -706,7 +929,7 @@ h2 {
   background: var(--green);
   color: #fff;
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 560;
   padding: 11px 12px;
 }
 
@@ -779,7 +1002,7 @@ h2 {
   padding: 4px 8px;
   color: var(--muted);
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 520;
 }
 
 .connectionGrid {
@@ -810,8 +1033,8 @@ h2 {
 
 .connectionItem span {
   font-size: 0.75rem;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-weight: 520;
+  text-transform: none;
 }
 
 .connectionItem strong {
@@ -858,6 +1081,1613 @@ h2 {
   padding: 8px 2px 22px;
 }
 
+.setupCanvas,
+.brainAppFrame {
+  min-height: 100vh;
+  background:
+    linear-gradient(90deg, rgba(18, 116, 90, 0.055) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(43, 99, 183, 0.04) 1px, transparent 1px),
+    var(--bg);
+  background-size: 34px 34px;
+}
+
+.setupCanvas {
+  padding: 18px;
+  overflow-x: hidden;
+}
+
+.setupCanvas form {
+  margin: 0;
+}
+
+.setupChatShell {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 16px;
+  min-height: calc(100vh - 36px);
+}
+
+.setupChecklistPanel,
+.setupConversationPanel,
+.setupExtractPanel,
+.brainRail,
+.operatorConsole,
+.missionChecklist,
+.lensCard,
+.accessMap,
+.registryDesk,
+.automationStrip {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--shadow);
+}
+
+.setupChecklistPanel {
+  position: sticky;
+  top: 18px;
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  height: calc(100vh - 36px);
+  overflow: auto;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.setupBrandBlock,
+.railBrand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.setupBrandBlock h1 {
+  max-width: 11ch;
+  font-size: 3rem;
+  font-weight: 560;
+  line-height: 0.96;
+  overflow-wrap: anywhere;
+}
+
+.brandGlyph,
+.lensIcon,
+.bubbleIcon,
+.threadIcon {
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(18, 116, 90, 0.22);
+  background: #ecf6f1;
+  color: var(--green);
+}
+
+.brandGlyph {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+}
+
+.modeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.modeCard,
+.tierPick,
+.connectorPick,
+.toggleLine,
+.ghostButton,
+.primaryButton,
+.commandChips button,
+.railScope,
+.railLink,
+.commandComposer button,
+.markdownToolbar button {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+}
+
+.modeCard {
+  display: grid;
+  gap: 6px;
+  min-height: 92px;
+  padding: 10px;
+  text-align: left;
+}
+
+.modeCard span,
+.tierPick small,
+.railScope small,
+.railLink small,
+.todoItem small,
+.connectorLine strong,
+.lensCard span,
+.threadMessage p,
+.chatBubble p,
+.registryLine span,
+.tierAccessRow small {
+  color: var(--muted);
+}
+
+.modeCardActive,
+.tierPickActive,
+.connectorPickActive,
+.toggleLineActive,
+.railScopeActive {
+  border-color: rgba(18, 116, 90, 0.28);
+  background: #f0faf5;
+  color: var(--green);
+}
+
+.compactSettings {
+  display: grid;
+  gap: 9px;
+}
+
+.compactSettings label {
+  display: grid;
+  gap: 5px;
+}
+
+.compactSettings span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 520;
+  text-transform: none;
+}
+
+.compactSettings input,
+.markdownComposer,
+.commandComposer textarea {
+  inline-size: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fcfcf9;
+  color: var(--ink);
+}
+
+.compactSettings input {
+  padding: 9px 10px;
+}
+
+.compactSettings input:focus,
+.markdownComposer:focus,
+.commandComposer textarea:focus {
+  border-color: rgba(43, 99, 183, 0.54);
+  outline: 3px solid rgba(43, 99, 183, 0.12);
+}
+
+.todoStack {
+  display: grid;
+  gap: 8px;
+}
+
+.todoItem {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 9px;
+}
+
+.todoItem span:first-child {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--muted);
+}
+
+.todoItem small {
+  grid-column: 2;
+  line-height: 1.35;
+}
+
+.todoDone span:first-child {
+  background: #eef8f3;
+  color: var(--green);
+}
+
+.setupConversationPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  gap: 16px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.chatSurface,
+.setupExtractPanel {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.chatSurface {
+  min-height: calc(100vh - 36px);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--shadow);
+}
+
+.chatHeader,
+.consoleHeader,
+.sectionHeader,
+.checklistHeader,
+.brainTopbar,
+.composerActions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chatHeader h2,
+.consoleHeader h2,
+.sectionHeader h2,
+.automationStrip h2 {
+  font-size: 1.12rem;
+}
+
+.keyboardHint,
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-2);
+  padding: 5px 8px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.pillGood {
+  border-color: rgba(18, 116, 90, 0.24);
+  background: #eff8f4;
+  color: var(--green);
+}
+
+.pillWarn {
+  border-color: rgba(182, 121, 45, 0.28);
+  background: #fff3df;
+  color: var(--amber);
+}
+
+.pillBad {
+  border-color: rgba(178, 78, 95, 0.28);
+  background: #fae8ed;
+  color: var(--red);
+}
+
+.messageStack,
+.commandThread {
+  display: grid;
+  gap: 10px;
+}
+
+.chatBubble,
+.threadMessage {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.assistantBubble,
+.assistantThreadMessage {
+  background: #f7faf6;
+}
+
+.userBubble,
+.userThreadMessage {
+  background: #f6f7ff;
+}
+
+.bubbleIcon,
+.threadIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.chatBubble p,
+.threadMessage p {
+  margin: 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.markdownToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.markdownToolbar button {
+  min-height: 32px;
+  padding: 6px 10px;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+
+.markdownToolbar button:hover,
+.markdownToolbar button:focus-visible,
+.modeCard:hover,
+.modeCard:focus-visible,
+.tierPick:hover,
+.tierPick:focus-visible,
+.connectorPick:hover,
+.connectorPick:focus-visible,
+.toggleLine:hover,
+.toggleLine:focus-visible,
+.railScope:hover,
+.railScope:focus-visible,
+.railLink:hover,
+.railLink:focus-visible,
+.commandChips button:hover,
+.commandChips button:focus-visible {
+  border-color: rgba(43, 99, 183, 0.36);
+  outline: none;
+}
+
+.markdownComposer {
+  min-height: 320px;
+  resize: vertical;
+  padding: 14px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.ghostButton,
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 14px;
+  font-weight: 560;
+}
+
+.primaryButton {
+  border-color: var(--green);
+  background: var(--green);
+  color: white;
+}
+
+.primaryButton:hover,
+.primaryButton:focus-visible {
+  background: var(--green-2);
+  outline: none;
+}
+
+.setupExtractPanel {
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+}
+
+.setupExtractPanel section {
+  display: grid;
+  gap: 10px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px;
+}
+
+.setupExtractPanel section:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.chipCloud,
+.connectorPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chipCloud span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  padding: 7px 9px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.tierPicker {
+  display: grid;
+  gap: 8px;
+}
+
+.tierPick {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 10px;
+  text-align: left;
+}
+
+.tierPick span {
+  display: grid;
+  gap: 3px;
+}
+
+.connectorPick {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 10px;
+  font-weight: 520;
+}
+
+.permissionStrip {
+  display: grid !important;
+  grid-template-columns: 1fr;
+}
+
+.toggleLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 9px 10px;
+  text-align: left;
+  font-weight: 520;
+}
+
+.brainAppFrame {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+}
+
+.brainRail {
+  position: sticky;
+  top: 0;
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  height: 100vh;
+  overflow: auto;
+  border-width: 0 1px 0 0;
+  border-radius: 0;
+  background: rgba(251, 251, 247, 0.88);
+  padding: 18px;
+  backdrop-filter: blur(18px);
+}
+
+.railBrand strong,
+.railBrand span {
+  display: block;
+}
+
+.railBrand span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.railSection {
+  display: grid;
+  gap: 7px;
+}
+
+.railSection > p {
+  margin: 0 0 2px;
+  color: var(--faint);
+  font-size: 0.72rem;
+  font-weight: 520;
+  text-transform: none;
+}
+
+.railScope,
+.railLink {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+  min-height: 52px;
+  padding: 10px;
+  text-align: left;
+}
+
+.railScope span,
+.railLink span {
+  display: grid;
+  gap: 2px;
+}
+
+.brainWorkspace {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 18px;
+}
+
+.brainTopbar {
+  align-items: center;
+}
+
+.brainTopbar h1 {
+  font-size: 3.65rem;
+  font-weight: 560;
+  line-height: 1.02;
+}
+
+.topbarStats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.topbarStats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  padding: 7px 10px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.brainCommandGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  gap: 16px;
+}
+
+.operatorConsole,
+.missionChecklist,
+.accessMap,
+.registryDesk {
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.operatorConsole {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.commandChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.commandChips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 8px 10px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.commandThread {
+  min-height: 250px;
+}
+
+.commandComposer {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9faf6;
+  padding: 10px;
+}
+
+.commandComposer textarea {
+  min-height: 132px;
+  resize: vertical;
+  padding: 12px;
+  line-height: 1.5;
+}
+
+.commandComposer > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  justify-self: end;
+  min-height: 38px;
+  border-color: var(--green);
+  background: var(--green);
+  color: white;
+  padding: 8px 14px;
+  font-weight: 560;
+}
+
+.missionChecklist {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.connectorStack {
+  display: grid;
+  gap: 8px;
+}
+
+.connectorLine {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 10px;
+}
+
+.connectorLine span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 520;
+}
+
+.connectorLine strong {
+  text-align: right;
+  font-size: 0.78rem;
+}
+
+.brainLensGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.lensCard {
+  display: grid;
+  gap: 9px;
+  min-height: 180px;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.lensIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.lensCard h2 {
+  font-size: 1.2rem;
+}
+
+.accessAndRegistryGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 16px;
+}
+
+.tierRows,
+.registryColumns,
+.registryColumns > div {
+  display: grid;
+  gap: 9px;
+}
+
+.registryColumns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tierAccessRow {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 82px minmax(150px, 1.2fr) 110px;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 10px;
+}
+
+.tierAccessRow span,
+.registryLine span {
+  font-weight: 520;
+}
+
+.tierAccessRow em {
+  color: var(--blue);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 520;
+  text-align: right;
+}
+
+.registryLine {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 10px;
+}
+
+.registryLine .pill {
+  font-size: 0.66rem;
+}
+
+.automationStrip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(4, auto);
+  gap: 12px;
+  align-items: center;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.loopStep {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  padding: 9px 10px;
+  color: var(--muted);
+  font-weight: 520;
+}
+
+.setupCanvas strong,
+.brainAppFrame strong {
+  font-weight: 560;
+}
+
+.setupCanvas h1,
+.brainAppFrame h1 {
+  font-weight: 560;
+}
+
+.setupCanvas h2,
+.brainAppFrame h2,
+.setupCanvas h3,
+.brainAppFrame h3 {
+  font-weight: 540;
+}
+
+.setupCanvas button,
+.brainAppFrame button,
+.setupCanvas input,
+.brainAppFrame input,
+.setupCanvas textarea,
+.brainAppFrame textarea {
+  font-weight: 400;
+}
+
+/* Premium cockpit pass: compact, dense, and interaction-focused. */
+.setupCanvas,
+.brainAppFrame {
+  color: #101411;
+  background:
+    linear-gradient(90deg, rgba(19, 51, 42, 0.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(39, 68, 106, 0.028) 1px, transparent 1px),
+    linear-gradient(180deg, #f8faf5 0%, #f2f5ef 100%);
+  background-size: 40px 40px, 40px 40px, auto;
+}
+
+.setupChecklistPanel,
+.chatSurface,
+.setupExtractPanel,
+.brainRail,
+.operatorConsole,
+.missionChecklist,
+.lensCard,
+.accessMap,
+.registryDesk,
+.automationStrip {
+  border-color: rgba(22, 32, 26, 0.12);
+  background: rgba(255, 255, 252, 0.9);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 12px 28px rgba(30, 42, 35, 0.055);
+  backdrop-filter: blur(18px);
+}
+
+.setupCanvas p,
+.brainAppFrame p {
+  margin-block: 0;
+}
+
+.setupCanvas h1,
+.setupCanvas h2,
+.setupCanvas h3,
+.brainAppFrame h1,
+.brainAppFrame h2,
+.brainAppFrame h3 {
+  margin-block: 0;
+  letter-spacing: 0;
+}
+
+.setupCanvas h2,
+.brainAppFrame h2 {
+  font-size: 0.98rem;
+  line-height: 1.25;
+}
+
+.setupCanvas h3,
+.brainAppFrame h3 {
+  font-size: 0.84rem;
+  line-height: 1.25;
+}
+
+.eyebrow {
+  color: var(--green);
+  font-size: 0.68rem;
+  line-height: 1.25;
+}
+
+.setupChatShell {
+  grid-template-columns: minmax(252px, 300px) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.setupChatShell > * {
+  min-width: 0;
+}
+
+.setupChecklistPanel {
+  gap: 12px;
+  height: calc(100vh - 36px);
+  padding: 14px;
+}
+
+.setupBrandBlock {
+  align-items: center;
+}
+
+.setupBrandBlock h1 {
+  max-width: none;
+  font-size: 1.85rem;
+  line-height: 1;
+}
+
+.brandGlyph {
+  width: 36px;
+  height: 36px;
+  border-color: rgba(18, 116, 90, 0.18);
+  background: linear-gradient(180deg, #f2fbf6, #e8f2ed);
+}
+
+.modeGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.modeCard {
+  min-height: 74px;
+  gap: 5px;
+  padding: 9px;
+}
+
+.modeCard svg,
+.tierPick svg,
+.connectorPick svg,
+.toggleLine svg,
+.railScope > svg,
+.railLink > svg {
+  color: color-mix(in srgb, var(--green) 70%, #22312a);
+}
+
+.modeCard strong,
+.tierPick strong,
+.todoItem strong,
+.railScope strong,
+.railLink strong,
+.registryLine span,
+.tierAccessRow span,
+.connectorLine span,
+.checklistHeader strong {
+  font-weight: 500;
+}
+
+.modeCard span {
+  font-size: 0.74rem;
+  line-height: 1.25;
+}
+
+.modeCard,
+.tierPick,
+.connectorPick,
+.toggleLine,
+.ghostButton,
+.primaryButton,
+.commandChips button,
+.railScope,
+.railLink,
+.markdownToolbar button,
+.commandComposer button {
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.modeCard:hover,
+.tierPick:hover,
+.connectorPick:hover,
+.toggleLine:hover,
+.ghostButton:hover,
+.primaryButton:hover,
+.commandChips button:hover,
+.railScope:hover,
+.railLink:hover,
+.markdownToolbar button:hover,
+.commandComposer button:hover {
+  transform: translateY(-1px);
+}
+
+.modeCardActive,
+.tierPickActive,
+.connectorPickActive,
+.toggleLineActive,
+.railScopeActive {
+  border-color: rgba(18, 116, 90, 0.34);
+  background: linear-gradient(180deg, #f1fbf6, #e9f6f0);
+  box-shadow:
+    0 0 0 1px rgba(18, 116, 90, 0.08) inset,
+    0 8px 18px rgba(18, 116, 90, 0.07);
+}
+
+.compactSettings {
+  gap: 7px;
+}
+
+.compactSettings label {
+  gap: 4px;
+}
+
+.compactSettings input,
+.markdownComposer,
+.commandComposer textarea {
+  border-color: rgba(22, 32, 26, 0.13);
+  background: rgba(255, 255, 252, 0.92);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.72) inset;
+}
+
+.compactSettings input {
+  min-height: 34px;
+  padding: 7px 9px;
+  font-size: 0.86rem;
+}
+
+.todoStack {
+  gap: 6px;
+}
+
+.todoItem {
+  min-height: 36px;
+  gap: 7px;
+  padding: 7px 8px;
+  font-size: 0.84rem;
+}
+
+.todoItem span:first-child {
+  width: 21px;
+  height: 21px;
+}
+
+.todoItem small {
+  color: #69726c;
+  font-size: 0.75rem;
+}
+
+.setupConversationPanel {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
+  gap: 12px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.chatSurface,
+.setupExtractPanel {
+  gap: 11px;
+  width: 100%;
+  max-width: 100%;
+  padding: 14px;
+}
+
+.chatSurface {
+  min-height: calc(100vh - 36px);
+}
+
+.chatHeader,
+.consoleHeader,
+.sectionHeader,
+.checklistHeader,
+.brainTopbar,
+.composerActions {
+  gap: 10px;
+}
+
+.keyboardHint,
+.pill {
+  min-height: 26px;
+  padding: 4px 8px;
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.messageStack,
+.commandThread {
+  gap: 8px;
+}
+
+.chatBubble,
+.threadMessage {
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 9px;
+  padding: 10px;
+}
+
+.chatBubble p,
+.threadMessage p {
+  font-size: 0.88rem;
+  line-height: 1.42;
+}
+
+.bubbleIcon,
+.threadIcon {
+  width: 26px;
+  height: 26px;
+}
+
+.markdownToolbar {
+  gap: 6px;
+}
+
+.markdownToolbar button {
+  min-height: 29px;
+  padding: 5px 9px;
+  font-size: 0.72rem;
+}
+
+.markdownComposer {
+  min-height: 238px;
+  padding: 12px;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.ghostButton,
+.primaryButton {
+  min-height: 38px;
+  padding: 8px 12px;
+  font-size: 0.86rem;
+}
+
+.primaryButton,
+.commandComposer > button {
+  background: linear-gradient(180deg, #16805f, #106d52);
+  box-shadow: 0 9px 20px rgba(16, 109, 82, 0.18);
+}
+
+.primaryButton:hover,
+.primaryButton:focus-visible,
+.commandComposer > button:hover,
+.commandComposer > button:focus-visible {
+  background: linear-gradient(180deg, #1a906b, #127a5b);
+}
+
+.setupExtractPanel {
+  max-height: calc(100vh - 36px);
+}
+
+.setupExtractPanel section {
+  gap: 8px;
+  padding-bottom: 12px;
+}
+
+.chipCloud,
+.connectorPicker {
+  gap: 6px;
+}
+
+.chipCloud span,
+.connectorPick {
+  min-height: 30px;
+  padding: 5px 8px;
+  font-size: 0.78rem;
+}
+
+.tierPicker {
+  gap: 6px;
+}
+
+.tierPick {
+  min-height: 50px;
+  padding: 8px;
+}
+
+.toggleLine {
+  min-height: 34px;
+  padding: 7px 9px;
+  font-size: 0.84rem;
+}
+
+.brainAppFrame {
+  grid-template-columns: 248px minmax(0, 1fr);
+}
+
+.brainRail {
+  gap: 14px;
+  padding: 14px;
+}
+
+.railBrand {
+  gap: 10px;
+}
+
+.railBrand span {
+  font-size: 0.76rem;
+}
+
+.railSection {
+  gap: 6px;
+}
+
+.railSection > p {
+  font-size: 0.68rem;
+}
+
+.railScope,
+.railLink {
+  grid-template-columns: 20px minmax(0, 1fr);
+  min-height: 44px;
+  gap: 8px;
+  padding: 8px;
+}
+
+.railScope small,
+.railLink small {
+  font-size: 0.74rem;
+  line-height: 1.25;
+}
+
+.brainWorkspace {
+  gap: 12px;
+  overflow: hidden;
+  padding: 14px;
+}
+
+.brainTopbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.brainTopbar h1 {
+  max-width: 100%;
+  font-size: 1.68rem;
+  font-weight: 520;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.topbarStats {
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.topbarStats span {
+  min-height: 30px;
+  padding: 5px 9px;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.brainCommandGrid {
+  grid-template-columns: minmax(0, 1fr) minmax(270px, 330px);
+  align-items: start;
+  gap: 12px;
+}
+
+.operatorConsole,
+.missionChecklist,
+.accessMap,
+.registryDesk {
+  padding: 14px;
+}
+
+.operatorConsole {
+  gap: 12px;
+  align-content: start;
+}
+
+.commandChips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 7px;
+}
+
+.commandChips button {
+  min-height: 32px;
+  justify-content: flex-start;
+  padding: 6px 9px;
+  font-size: 0.74rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.commandThread {
+  min-height: 148px;
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid rgba(22, 32, 26, 0.1);
+  border-radius: 8px;
+  background: rgba(248, 250, 246, 0.72);
+  padding: 8px;
+}
+
+.threadMessage {
+  background: rgba(255, 255, 252, 0.86);
+}
+
+.assistantThreadMessage {
+  border-color: rgba(18, 116, 90, 0.14);
+}
+
+.userThreadMessage {
+  border-color: rgba(43, 99, 183, 0.14);
+}
+
+.commandComposer {
+  gap: 8px;
+  background: linear-gradient(180deg, rgba(255, 255, 252, 0.94), rgba(246, 249, 244, 0.94));
+  padding: 9px;
+}
+
+.commandComposer textarea {
+  min-height: 96px;
+  padding: 10px;
+  font-size: 0.86rem;
+}
+
+.commandComposer > button {
+  min-height: 34px;
+  padding: 7px 12px;
+  font-size: 0.84rem;
+}
+
+.missionChecklist {
+  gap: 12px;
+  max-height: min(520px, calc(100vh - 110px));
+  overflow: auto;
+}
+
+.connectorStack {
+  gap: 6px;
+}
+
+.connectorLine {
+  align-items: center;
+  min-height: 36px;
+  padding: 7px 8px;
+}
+
+.connectorLine span {
+  min-width: 0;
+  font-size: 0.82rem;
+}
+
+.connectorLine strong {
+  max-width: 145px;
+  overflow: hidden;
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brainLensGrid,
+.accessAndRegistryGrid {
+  gap: 12px;
+}
+
+.lensCard {
+  min-height: 124px;
+  gap: 7px;
+  padding: 14px;
+}
+
+.lensIcon {
+  width: 31px;
+  height: 31px;
+}
+
+.lensCard h2 {
+  font-size: 1.02rem;
+  line-height: 1.22;
+}
+
+.lensCard span {
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.tierRows,
+.registryColumns,
+.registryColumns > div {
+  gap: 7px;
+}
+
+.tierAccessRow {
+  grid-template-columns: minmax(105px, 1fr) 64px minmax(120px, 1.15fr) 88px;
+  gap: 8px;
+  min-height: 38px;
+  padding: 7px 8px;
+}
+
+.tierAccessRow strong,
+.tierAccessRow small,
+.tierAccessRow em,
+.registryLine span,
+.registryLine strong {
+  font-size: 0.76rem;
+}
+
+.tierAccessRow em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.registryLine {
+  min-height: 38px;
+  gap: 8px;
+  padding: 7px 8px;
+}
+
+.registryLine span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.registryLine .pill {
+  font-size: 0.62rem;
+}
+
+.automationStrip {
+  grid-template-columns: minmax(220px, 1fr) repeat(4, minmax(86px, auto));
+  gap: 8px;
+  padding: 14px;
+}
+
+.loopStep {
+  justify-content: center;
+  min-height: 34px;
+  padding: 7px 9px;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 1280px) {
+  .brainAppFrame {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1180px) {
+  .brainCommandGrid,
+  .accessAndRegistryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .missionChecklist {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.8fr);
+    align-items: start;
+  }
+
+  .missionChecklist .todoStack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .setupChatShell,
+  .setupConversationPanel,
+  .brainAppFrame {
+    grid-template-columns: 1fr;
+  }
+
+  .setupConversationPanel {
+    order: 1;
+  }
+
+  .setupChecklistPanel {
+    order: 2;
+  }
+
+  .brainRail,
+  .setupChecklistPanel {
+    position: static;
+    height: auto;
+  }
+
+  .brainRail {
+    border-width: 0 0 1px;
+  }
+
+  .brainTopbar {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .topbarStats {
+    justify-content: flex-start;
+  }
+
+  .missionChecklist {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .setupCanvas,
+  .brainWorkspace {
+    padding: 10px;
+  }
+
+  .setupChatShell,
+  .setupConversationPanel,
+  .brainWorkspace {
+    gap: 10px;
+  }
+
+  .setupBrandBlock h1 {
+    font-size: 1.5rem;
+  }
+
+  .modeGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .modeCard {
+    min-height: 46px;
+    padding: 7px;
+  }
+
+  .modeCard span {
+    display: none;
+  }
+
+  .todoStack,
+  .missionChecklist .todoStack {
+    grid-template-columns: 1fr;
+  }
+
+  .chatHeader,
+  .consoleHeader,
+  .sectionHeader,
+  .checklistHeader,
+  .composerActions,
+  .connectorLine {
+    display: grid;
+    justify-content: stretch;
+  }
+
+  .markdownComposer {
+    min-height: 190px;
+  }
+
+  .railSection {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .railSection > p {
+    grid-column: 1 / -1;
+  }
+
+  .railScope,
+  .railLink {
+    min-height: 40px;
+  }
+
+  .railScope small,
+  .railLink small {
+    display: none;
+  }
+
+  .brainTopbar h1 {
+    font-size: 1.65rem;
+  }
+
+  .commandChips {
+    grid-template-columns: 1fr;
+  }
+
+  .commandThread {
+    max-height: 210px;
+  }
+
+  .brainLensGrid,
+  .registryColumns,
+  .tierAccessRow,
+  .automationStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .tierAccessRow {
+    align-items: start;
+  }
+
+  .tierAccessRow em {
+    text-align: left;
+  }
+
+  .topbarStats span {
+    font-size: 0.72rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modeCard,
+  .tierPick,
+  .connectorPick,
+  .toggleLine,
+  .ghostButton,
+  .primaryButton,
+  .commandChips button,
+  .railScope,
+  .railLink,
+  .markdownToolbar button,
+  .commandComposer button {
+    transition: none;
+  }
+
+  .modeCard:hover,
+  .tierPick:hover,
+  .connectorPick:hover,
+  .toggleLine:hover,
+  .ghostButton:hover,
+  .primaryButton:hover,
+  .commandChips button:hover,
+  .railScope:hover,
+  .railLink:hover,
+  .markdownToolbar button:hover,
+  .commandComposer button:hover {
+    transform: none;
+  }
+}
+
 @media (max-width: 1120px) {
   .appShell {
     grid-template-columns: 1fr;
@@ -879,14 +2709,55 @@ h2 {
   .topBar,
   .heroConsole,
   .workbenchGrid,
-  .layoutGrid {
+  .layoutGrid,
+  .setupPanel,
+  .commandColumns,
+  .setupChatShell,
+  .setupConversationPanel,
+  .brainAppFrame,
+  .brainCommandGrid,
+  .accessAndRegistryGrid,
+  .automationStrip {
     grid-template-columns: 1fr;
+  }
+
+  .setupIntro {
+    position: static;
+    min-height: auto;
+  }
+
+  .setupChecklistPanel,
+  .brainRail {
+    position: static;
+    height: auto;
+  }
+
+  .brainRail {
+    border-width: 0 0 1px;
   }
 
   .metricsGrid,
   .connectionGrid,
-  .registryGrid {
+  .registryGrid,
+  .commandGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .setupOptionGrid,
+  .setupCheckGrid,
+  .brainLensGrid,
+  .registryColumns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .setupExtractPanel,
+  .chatSurface {
+    min-height: auto;
+    max-height: none;
+  }
+
+  .automationStrip {
+    align-items: stretch;
   }
 }
 
@@ -897,7 +2768,6 @@ h2 {
 
   .setupPanel {
     grid-template-columns: 1fr;
-    padding: 18px;
   }
 
   .mainContent {
@@ -912,9 +2782,25 @@ h2 {
   .metricsGrid,
   .connectionGrid,
   .registryGrid,
+  .commandGrid,
+  .setupTwo,
+  .setupOptionGrid,
+  .setupCheckGrid,
+  .modeGrid,
+  .brainLensGrid,
+  .registryColumns,
+  .tierAccessRow,
   .adapterGrid,
   .architectureMap {
     grid-template-columns: 1fr;
+  }
+
+  .scopeSwitcher {
+    grid-template-columns: 1fr;
+  }
+
+  .scopeChipRow {
+    justify-content: flex-start;
   }
 
   .searchBox {
@@ -934,6 +2820,175 @@ h2 {
   }
 
   .auditRow {
+    grid-template-columns: 1fr;
+  }
+
+  .setupCanvas,
+  .brainWorkspace {
+    padding: 12px;
+  }
+
+  .setupChatShell {
+    min-height: auto;
+  }
+
+  .setupBrandBlock {
+    align-items: flex-start;
+  }
+
+  .setupBrandBlock h1,
+  .brainTopbar h1 {
+    font-size: 2.3rem;
+  }
+
+  .brainTopbar,
+  .chatHeader,
+  .consoleHeader,
+  .sectionHeader,
+  .checklistHeader,
+  .composerActions,
+  .connectorLine {
+    display: grid;
+    justify-content: stretch;
+  }
+
+  .topbarStats,
+  .commandChips,
+  .markdownToolbar {
+    justify-content: flex-start;
+  }
+
+  .brainRail {
+    gap: 12px;
+  }
+
+  .railSection {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .railSection::-webkit-scrollbar {
+    display: none;
+  }
+
+  .railSection > p {
+    display: none;
+  }
+
+  .railScope,
+  .railLink {
+    flex: 0 0 128px;
+    min-height: 44px;
+    padding: 8px;
+  }
+
+  .railScope small,
+  .railLink small {
+    display: none;
+  }
+
+  .markdownComposer {
+    min-height: 260px;
+  }
+
+  .automationStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .loopStep {
+    justify-content: space-between;
+  }
+}
+
+/* Final responsive corrections for the cockpit pass. */
+@media (max-width: 960px) {
+  .setupConversationPanel {
+    order: 1;
+  }
+
+  .setupChecklistPanel {
+    order: 2;
+  }
+
+  .brainTopbar h1 {
+    font-size: 1.75rem;
+  }
+
+  .missionChecklist {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .setupCanvas {
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .setupChatShell,
+  .setupConversationPanel,
+  .setupChecklistPanel,
+  .chatSurface,
+  .setupExtractPanel {
+    min-width: 0;
+    max-width: calc(100vw - 20px);
+    overflow-x: hidden;
+  }
+
+  .chatBubble p,
+  .threadMessage p,
+  .markdownComposer,
+  .commandComposer textarea,
+  .chipCloud span,
+  .connectorPick,
+  .tierPick {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .chipCloud,
+  .connectorPicker {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .chipCloud span,
+  .connectorPick {
+    max-width: 100%;
+  }
+
+  .setupBrandBlock h1 {
+    font-size: 1.5rem;
+  }
+
+  .brainTopbar h1 {
+    font-size: 1.65rem;
+  }
+
+  .modeGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .modeCard {
+    min-height: 46px;
+    padding: 7px;
+  }
+
+  .modeCard span {
+    display: none;
+  }
+
+  .markdownComposer {
+    min-height: 190px;
+  }
+
+  .brainLensGrid,
+  .registryColumns,
+  .tierAccessRow,
+  .automationStrip {
     grid-template-columns: 1fr;
   }
 }

@@ -10,6 +10,7 @@ import type {
   RegistryItem,
   SourceArtifact
 } from "./types";
+import { createDefaultOperatorPackages } from "./default-operators";
 
 export const now = "2026-06-29T10:30:00.000Z";
 
@@ -179,28 +180,6 @@ export const atoms: KnowledgeAtom[] = [
 
 export const registry: RegistryItem[] = [
   {
-    id: "skill_onboarding_brief",
-    tenantId: "tenant_demo",
-    kind: "skill",
-    name: "Onboarding brief",
-    slug: "onboarding-brief",
-    description: "Prepare a cited first-week operating brief for a new hire from company-main and department playbooks.",
-    tier: "company-main",
-    ownerId: "usr_reviewer",
-    version: "1.4.0",
-    status: "published",
-    permissions: ["brain:read", "registry:read"],
-    dependencies: ["atom_001", "atom_002"],
-    requiredTools: ["tool_brain_query"],
-    adapterTargets: ["codex", "claude-code", "opencode", "generic-mcp"],
-    updatedAt: "2026-06-28T18:00:00.000Z",
-    skillMarkdown:
-      "# Onboarding brief\n\nCreate a short operating brief for a new hire. Cite the company brain and list open questions separately from facts.",
-    evals: ["evals/onboarding-brief/grounding.yml", "evals/onboarding-brief/acl.yml"],
-    examples: ["Generate a first-week brief for a revenue hire joining the enterprise pod."],
-    changelog: ["1.4.0: Added ACL-sensitive source filtering.", "1.3.0: Added owner checklist."]
-  },
-  {
     id: "tool_brain_query",
     tenantId: "tenant_demo",
     kind: "tool",
@@ -229,6 +208,7 @@ export const registry: RegistryItem[] = [
     secrets: [],
     auditPolicy: "log-metadata"
   },
+  ...createDefaultOperatorPackages({ ownerId: "usr_admin", updatedAt: "2026-06-30T12:00:00.000Z" }),
   {
     id: "plugin_agent_registry",
     tenantId: "tenant_demo",
